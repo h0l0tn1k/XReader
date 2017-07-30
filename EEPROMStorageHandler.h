@@ -2,6 +2,8 @@
 #include <EEPROM.h>
 #include "HardwareSerial.h"
 
+typedef unsigned long int uint32_m;
+
 class EEPROMStorageHandler {
 
 private:
@@ -10,9 +12,10 @@ private:
 	//	  0		|	1		2		3		4		5
 	//#numOfRec#|#########MASTERCARD############|###CARDS Start HERE
 
-	unsigned int _masterCardAddress = 1;
-	unsigned int _baseAddress = 5;
+	const uint8_t _masterCardAddress = 1;
+	const uint8_t _baseAddress = 5;
 	unsigned char _numberOfRecords = 0;
+	uint32_m _masterCardId;
 	HardwareSerial* _serial;
 
 public:
@@ -22,10 +25,10 @@ public:
 	void registerNewCard(uint8_t * cardId);
 	bool isCardRegistered(uint8_t * cardId);
 private:
-	unsigned long int getCardAtIndex(unsigned char i);
+	uint32_m getCardAtIndex(unsigned char i);
 	void setNumberOfStoredCards(unsigned char newNumber);
 	unsigned char getNumberOfStoredCards();
-	unsigned long int getMasterCardId();
-	unsigned long int convertToInt32(uint8_t * uid);
+	uint32_m getMasterCardId();
+	uint32_m convertToInt32(uint8_t * uid);
 
 };

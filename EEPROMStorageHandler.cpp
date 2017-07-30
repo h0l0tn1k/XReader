@@ -3,9 +3,11 @@
 
 
 EEPROMStorageHandler::EEPROMStorageHandler(HardwareSerial* serial)
-	:_serial(serial)
+	:_serial(serial), 
+	 _numberOfRecords(getNumberOfStoredCards()), 
+	 _masterCardId(getMasterCardId())
 {
-	_numberOfRecords = getNumberOfStoredCards();
+
 }
 
 void EEPROMStorageHandler::writeMasterCard(uint8_t * cardId)
@@ -16,12 +18,11 @@ void EEPROMStorageHandler::writeMasterCard(uint8_t * cardId)
 	}
 }
 
-unsigned long int EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
-	unsigned long int i = ((unsigned long int)uid[0] << 24) | ((unsigned long int)uid[1] << 16) | ((unsigned long int)uid[2] << 8) | ((unsigned long int)uid[3]);
-	return i;
+uint32_m EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
+	return ((uint32_m)uid[0] << 24) | ((uint32_m)uid[1] << 16) | ((uint32_m)uid[2] << 8) | ((uint32_m)uid[3]);
 }
 
-unsigned long int EEPROMStorageHandler::getMasterCardId()
+uint32_m EEPROMStorageHandler::getMasterCardId()
 {
 	uint8_t uid[] = { 0, 0, 0, 0};
 
@@ -30,10 +31,10 @@ unsigned long int EEPROMStorageHandler::getMasterCardId()
 		uid[i] = eeprom_read_byte(i + 1);
 	}
 	
-	unsigned long int i = convertToInt32(&uid[0]);
+	uint32_m i = convertToInt32(&uid[0]);
 
 #ifdef DEBUG
-	_serial->print("MASTER CARD VALUE: "); _serial->println((unsigned long int)i);
+	_serial->print("MASTER CARD VALUE: "); _serial->println((uint32_m)i);
 #endif // DEBUG
 
 	return i;
@@ -41,7 +42,7 @@ unsigned long int EEPROMStorageHandler::getMasterCardId()
 
 bool EEPROMStorageHandler::isMasterCard(uint8_t * cardId)
 {
-	return getMasterCardId() == convertToInt32(cardId);
+	return _masterCardId == convertToInt32(cardId);
 }
 
 void EEPROMStorageHandler::registerNewCard(uint8_t* cardId) {
@@ -74,23 +75,22 @@ void EEPROMStorageHandler::registerNewCard(uint8_t* cardId) {
 	else {
 		_serial->println("ERROR: Cannot save new card.");
 	}
-
 }
 
 bool EEPROMStorageHandler::isCardRegistered(uint8_t* cardId) {
 
-	unsigned long int cardIdInt32 = convertToInt32(&cardId[0]);
+	uint32_m cardIdInt32 = convertToInt32(&cardId[0]);
 
 #ifdef DEBUG
-	_serial->print("CARD TO CHECK : "); _serial->println((unsigned long int)cardIdInt32, DEC);
+	_serial->print("CARD TO CHECK : "); _serial->println((uint32_m)cardIdInt32, DEC);
 #endif // DEBUG
 
 	for (size_t indexOfRecords = 0; indexOfRecords < _numberOfRecords; indexOfRecords++) {
 			
-		unsigned long int fromMemory = getCardAtIndex(indexOfRecords);
+		uint32_m fromMemory = getCardAtIndex(indexOfRecords);
 
 #ifdef DEBUG
-		_serial->print("	CARD IN MEMORY: "); _serial->println((unsigned long int)fromMemory, DEC);
+		_serial->print("	CARD IN MEMORY: "); _serial->println((uint32_m)fromMemory, DEC);
 #endif // DEBUG
 
 		if (cardIdInt32 == fromMemory) {
@@ -108,7 +108,7 @@ bool EEPROMStorageHandler::isCardRegistered(uint8_t* cardId) {
 	return false;
 }
 
-unsigned long int EEPROMStorageHandler::getCardAtIndex(unsigned char index) {
+uint32_m EEPROMStorageHandler::getCardAtIndex(unsigned char index) {
 	uint8_t uid[] = { 0, 0, 0, 0 };
 
 	for (size_t i = 0; i < 4; i++)
