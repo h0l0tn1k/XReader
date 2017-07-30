@@ -15,7 +15,7 @@ void XReader::begin()
   _eepromStorage = new EEPROMStorageHandler(&Serial);
   pinMode(_blueLed, OUTPUT);
   pinMode(_greenLed, OUTPUT);
-  digitalWrite(_greenLed, HIGH); 
+  switchOnLed(_greenLed);
 
   _board->begin();
 }
@@ -27,10 +27,12 @@ void XReader::checkConnectionToPn532()
 		Serial.print("Didn't find PN53x board");
 		while (1); // halt
 	}
-	// Got ok data, print it out!
+
+#ifdef DEBUG
 	Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
 	Serial.print("Firmware ver. "); Serial.print((versiondata >> 16) & 0xFF, DEC);
 	Serial.print('.'); Serial.println((versiondata >> 8) & 0xFF, DEC);
+#endif // DEBUG
 
 	initBoard();
 }
@@ -50,33 +52,35 @@ void XReader::loopProcedure()
 	//return 0;
 	if (success) {
 		if (_eepromStorage->isMasterCard(&uid[0])) {
-			Serial.println("=======THIS IS MASTERCARD======");
+			Serial.println("=======THIS IS MASTERCARD======"); Serial.println("Waiting for new card to register...");
 
-			Serial.println("Waiting for new card to register...");
-			delay(2000);
+			delay(1000); // delay otherwise it'd register master card
+			switchOnLed(_blueLed);
+
 			_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 			_eepromStorage->registerNewCard(&uid[0]);
+
+			switchOffLed(_blueLed);
 
 		}else if (_eepromStorage->isCardRegistered(&uid[0])) {
 			Serial.println("=======THIS IS REGISTERED CARD======");
 
+			switchOnLed(_blueLed);
+			//TODO: open door for 3s
+			//TODO: sound buzzer
+			delay(3000);
+
+			//TODO: close door
+			//TODO: mute buzzer
+			switchOffLed(_blueLed);
 		}
 		else {
 			Serial.println("#######THIS IS NOT REGISTERED CARD ######");
+			
+			//TODO: switchOnLed(_redLed);
+			delay(1000);
+			//TODO: switchOffLed(_redLed);
 		}
-    
-		//Serial.println("Found a card!");
-		//Serial.print("UID Length: "); Serial.print(uidLength, DEC); Serial.println(" bytes");
-		//Serial.print("UID Value: ");
-		for (uint8_t i = 0; i < uidLength; i++)
-		{
-			//Serial.print(" 0x"); Serial.print(uid[i], HEX);
-		}
-		//Serial.println("");
-		// Wait 1 second before continuing
-    digitalWrite(_blueLed, HIGH); 
-		delay(1000);
-    digitalWrite(_blueLed, LOW); 
 	}
 	else
 	{
@@ -96,4 +100,12 @@ void XReader::initBoard()
 	_board->SAMConfig();
 
 	Serial.println("Waiting for an ISO14443A card");
+}
+
+void XReader::switchOnLed(unsigned char ledPin) {
+	digitalWrite(ledPin, HIGH);
+}
+
+void XReader::switchOffLed(unsigned char ledPin) {
+	digitalWrite(ledPin, LOW);
 }

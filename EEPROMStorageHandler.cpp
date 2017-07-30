@@ -1,19 +1,19 @@
 #include "EEPROMStorageHandler.h"
 
 
+
+EEPROMStorageHandler::EEPROMStorageHandler(HardwareSerial* serial)
+	:_serial(serial)
+{
+	_numberOfRecords = getNumberOfStoredCards();
+}
+
 void EEPROMStorageHandler::writeMasterCard(uint8_t * cardId)
 {
 	for (size_t i = 0; i < 4; i++)
 	{
 		eeprom_write_byte(i + _masterCardAddress, cardId[i]);
 	}
-}
-
-EEPROMStorageHandler::EEPROMStorageHandler(HardwareSerial* serial)
-{
-	_serial = serial;
-	_numberOfRecords = getNumberOfStoredCards();
-	_serial->print("Number of stored cards: ");  _serial->println((int)_numberOfRecords);
 }
 
 unsigned long int EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
@@ -125,6 +125,10 @@ void EEPROMStorageHandler::setNumberOfStoredCards(unsigned char newNumber) {
 
 unsigned char EEPROMStorageHandler::getNumberOfStoredCards() {
 	_numberOfRecords = eeprom_read_byte(0);
+
+#ifdef DEBUG
+	_serial->print("Number of stored cards: ");  _serial->println((int)_numberOfRecords);
+#endif // DEBUG
 
 	return _numberOfRecords;
 }

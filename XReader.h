@@ -6,8 +6,8 @@
 class XReader {
 private:
 	Adafruit_PN532* _board;
-  char _blueLed = 8;
-  char _greenLed = 7;
+  unsigned char _blueLed = 8;
+  unsigned char _greenLed = 7;
   EEPROMStorageHandler* _eepromStorage;
 public:
 	XReader();
@@ -16,4 +16,6 @@ public:
 	void loopProcedure();
 private:
 	void initBoard();
+	void switchOnLed(unsigned char ledPin);
+	void switchOffLed(unsigned char ledPin);
 };
