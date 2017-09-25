@@ -48,11 +48,10 @@ void XReader::loopProcedure()
 									// if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
 	success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 
-	//_eepromStorage->writeMasterCard(&uid[0]);
-	//return 0;
 	if (success) {
 		if (_eepromStorage->isMasterCard(&uid[0])) {
-			Serial.println("=======THIS IS MASTERCARD======"); Serial.println("Waiting for new card to register...");
+			Serial.println("=======THIS IS MASTERCARD======"); 
+			Serial.println("Waiting for new card to register...");
 
 			delay(1000); // delay otherwise it'd register master card
 			switchOnLed(_blueLed);
@@ -66,20 +65,26 @@ void XReader::loopProcedure()
 			Serial.println("=======THIS IS REGISTERED CARD======");
 
 			switchOnLed(_blueLed);
+			switchOnLed(_buzzer);
 			//TODO: open door for 3s
 			//TODO: sound buzzer
-			delay(3000);
+			delay(2000);
 
 			//TODO: close door
 			//TODO: mute buzzer
 			switchOffLed(_blueLed);
+			switchOffLed(_buzzer);
 		}
 		else {
 			Serial.println("#######THIS IS NOT REGISTERED CARD ######");
 			
-			//TODO: switchOnLed(_redLed);
-			delay(1000);
-			//TODO: switchOffLed(_redLed);
+			//TODO: 
+			switchOnLed(_redLed); 
+			switchOnLed(_buzzer);
+			delay(2000);
+			//TODO: 
+			switchOffLed(_redLed);
+			switchOffLed(_buzzer);
 		}
 	}
 	else

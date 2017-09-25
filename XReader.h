@@ -8,6 +8,8 @@ private:
 	Adafruit_PN532* _board;
   unsigned char _blueLed = 8;
   unsigned char _greenLed = 7;
+  unsigned char _redLed = 9;
+  unsigned char _buzzer = 2;
   EEPROMStorageHandler* _eepromStorage;
 public:
 	XReader();

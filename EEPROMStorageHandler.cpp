@@ -4,46 +4,66 @@
 
 EEPROMStorageHandler::EEPROMStorageHandler(HardwareSerial* serial)
 	:_serial(serial), 
-	 _numberOfRecords(getNumberOfStoredCards()), 
+	 _numberOfRecords(getNumberOfCards()),
 	 _masterCardId(getMasterCardId())
 {
 
 }
 
-void EEPROMStorageHandler::writeMasterCard(uint8_t * cardId)
-{
-	for (size_t i = 0; i < 4; i++)
-	{
-		eeprom_write_byte(i + _masterCardAddress, cardId[i]);
-	}
-}
 
 uint32_m EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
 	return ((uint32_m)uid[0] << 24) | ((uint32_m)uid[1] << 16) | ((uint32_m)uid[2] << 8) | ((uint32_m)uid[3]);
 }
 
+#pragma region Master Card
+
+bool EEPROMStorageHandler::getMasterCardSizeIndicator() 
+{
+	//true -> 7B, false -> 4B
+	return ((bool) eeprom_read_byte(8));
+}
+
+void EEPROMStorageHandler::setMasterCardSizeIndicator(bool is7Byte)
+{
+	eeprom_write_byte(8, is7Byte);
+}
+
 uint32_m EEPROMStorageHandler::getMasterCardId()
 {
-	uint8_t uid[] = { 0, 0, 0, 0};
+	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
+	size_t uid_length = (getMasterCardSizeIndicator()) ? 7 : 4;
 
-	for (uint8_t i = 0; i < 4; i++)
+	for (uint8_t i = 0; i < uid_length; i++)
 	{
 		uid[i] = eeprom_read_byte(i + 1);
 	}
-	
+
+	// TODO: CHANGE TO 4B/7B version
 	uint32_m i = convertToInt32(&uid[0]);
 
-#ifdef DEBUG
-	_serial->print("MASTER CARD VALUE: "); _serial->println((uint32_m)i);
-#endif // DEBUG
+	Serial.print("MASTER CARD VALUE: "); Serial.println((uint32_m)i);
 
 	return i;
 }
 
-bool EEPROMStorageHandler::isMasterCard(uint8_t * cardId)
+bool EEPROMStorageHandler::isMasterCard(uint8_t* uid, uint8_t uid_length)
 {
 	return _masterCardId == convertToInt32(cardId);
 }
+
+void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
+{
+	setMasterCardSizeIndicator(uid_length == ((size_t) uid_length));
+
+	for (size_t i = 0; i < uid_length; i++)
+	{
+		eeprom_write_byte(i + 1, uid[i]);
+	}
+}
+
+#pragma endregion
+
+
 
 void EEPROMStorageHandler::registerNewCard(uint8_t* cardId) {
 	bool isAlreadyRegistered = this->isCardRegistered(cardId);
@@ -119,16 +139,45 @@ uint32_m EEPROMStorageHandler::getCardAtIndex(unsigned char index) {
 	return convertToInt32(&uid[0]);
 }
 
-void EEPROMStorageHandler::setNumberOfStoredCards(unsigned char newNumber) {
+
+#pragma region Number of Cards
+
+
+void EEPROMStorageHandler::setNumberOfCards(unsigned char newNumber) {
+
+#ifdef DEBUG
+	_serial->print("Setting number of stored cards to : ");  _serial->println((unsigned int)newNumber);
+#endif // DEBUG
+
 	eeprom_write_byte(0, newNumber);
 }
 
-unsigned char EEPROMStorageHandler::getNumberOfStoredCards() {
+unsigned char EEPROMStorageHandler::getNumberOfCards() {
 	_numberOfRecords = eeprom_read_byte(0);
 
 #ifdef DEBUG
-	_serial->print("Number of stored cards: ");  _serial->println((int)_numberOfRecords);
+	_serial->print("Number of stored cards: ");  _serial->println((unsigned int)_numberOfRecords);
 #endif // DEBUG
 
 	return _numberOfRecords;
 }
+
+void EEPROMStorageHandler::increaseNumberOfCards() {
+
+#ifdef DEBUG
+	_serial->print("Increasing number of stored cards.");
+#endif // DEBUG
+
+	setNumberOfCards(getNumberOfCards() + 1);
+}
+
+void EEPROMStorageHandler::decreaseNumberOfCards() {
+
+#ifdef DEBUG
+	_serial->print("Decreasing number of stored cards.");
+#endif // DEBUG
+
+	setNumberOfCards(getNumberOfCards() - 1);
+}
+
+#pragma endregion
