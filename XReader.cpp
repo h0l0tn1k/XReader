@@ -49,7 +49,8 @@ void XReader::loopProcedure()
 	success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 
 	if (success) {
-		if (_eepromStorage->isMasterCard(&uid[0])) {
+
+		if (_eepromStorage->isMasterCard(&uid[0], uidLength)) {
 			Serial.println("=======THIS IS MASTERCARD======"); 
 			Serial.println("Waiting for new card to register...");
 
@@ -57,11 +58,11 @@ void XReader::loopProcedure()
 			switchOnLed(_blueLed);
 
 			_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-			_eepromStorage->registerNewCard(&uid[0]);
+			_eepromStorage->registerNewCard(&uid[0], uidLength);
 
 			switchOffLed(_blueLed);
 
-		}else if (_eepromStorage->isCardRegistered(&uid[0])) {
+		}else if (_eepromStorage->isCardRegistered(&uid[0], uidLength)) {
 			Serial.println("=======THIS IS REGISTERED CARD======");
 
 			switchOnLed(_blueLed);
@@ -105,6 +106,21 @@ void XReader::initBoard()
 	_board->SAMConfig();
 
 	Serial.println("Waiting for an ISO14443A card");
+
+
+	_eepromStorage->setCardBlockType(1, true);
+	_eepromStorage->isCardBlock7B(1);
+	_eepromStorage->setCardBlockType(9, true);
+	_eepromStorage->isCardBlock7B(9);
+	_eepromStorage->setCardBlockType(17, true);
+	_eepromStorage->isCardBlock7B(17);
+	_eepromStorage->setCardBlockType(25, true);
+	_eepromStorage->isCardBlock7B(25);
+
+
+
+	_eepromStorage->isCardBlock7B(0);
+	_eepromStorage->isCardBlock7B(2);
 }
 
 void XReader::switchOnLed(unsigned char ledPin) {

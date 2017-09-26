@@ -48,7 +48,7 @@ uint32_m EEPROMStorageHandler::getMasterCardId()
 
 bool EEPROMStorageHandler::isMasterCard(uint8_t* uid, uint8_t uid_length)
 {
-	return _masterCardId == convertToInt32(cardId);
+	return _masterCardId == convertToInt32(uid);
 }
 
 void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
@@ -64,12 +64,12 @@ void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
 #pragma endregion
 
 
-
-void EEPROMStorageHandler::registerNewCard(uint8_t* cardId) {
-	bool isAlreadyRegistered = this->isCardRegistered(cardId);
-	bool isMasterCard = this->isMasterCard(cardId);
+void EEPROMStorageHandler::registerNewCard(uint8_t* cardId, uint8_t uid_length) {
+	bool isAlreadyRegistered = this->isCardRegistered(cardId, uid_length);
+	bool isMasterCard = this->isMasterCard(cardId, uid_length);
 
 	if (!isAlreadyRegistered && !isMasterCard) {
+		/*
 		unsigned short int offset = _baseAddress + (_numberOfRecords * 4);
 #ifdef DEBUG
 		_serial->print("OFFSET IS "); _serial->println((unsigned short int)offset);
@@ -78,8 +78,9 @@ void EEPROMStorageHandler::registerNewCard(uint8_t* cardId) {
 		{
 			eeprom_write_byte(i + offset, cardId[i]);
 		}
+		*/
 
-		setNumberOfStoredCards(++_numberOfRecords);
+		this->setNumberOfCards(++_numberOfRecords);
 #ifdef DEBUG
 		_serial->print("_numberOfRecords IS "); _serial->println((unsigned char)_numberOfRecords, DEC);
 #endif // DEBUG
@@ -97,7 +98,7 @@ void EEPROMStorageHandler::registerNewCard(uint8_t* cardId) {
 	}
 }
 
-bool EEPROMStorageHandler::isCardRegistered(uint8_t* cardId) {
+bool EEPROMStorageHandler::isCardRegistered(uint8_t* cardId, uint8_t uid_length) {
 
 	uint32_m cardIdInt32 = convertToInt32(&cardId[0]);
 
@@ -133,7 +134,7 @@ uint32_m EEPROMStorageHandler::getCardAtIndex(unsigned char index) {
 
 	for (size_t i = 0; i < 4; i++)
 	{
-		uid[i] = eeprom_read_byte(_baseAddress + (index * 4) + i);
+		//uid[i] = eeprom_read_byte(_baseAddress + (i * 4) + i);
 	}
 
 	return convertToInt32(&uid[0]);
@@ -150,6 +151,7 @@ void EEPROMStorageHandler::setNumberOfCards(unsigned char newNumber) {
 #endif // DEBUG
 
 	eeprom_write_byte(0, newNumber);
+	_numberOfRecords = newNumber;
 }
 
 unsigned char EEPROMStorageHandler::getNumberOfCards() {
@@ -178,6 +180,85 @@ void EEPROMStorageHandler::decreaseNumberOfCards() {
 #endif // DEBUG
 
 	setNumberOfCards(getNumberOfCards() - 1);
+}
+
+#pragma endregion
+
+
+#pragma region Pin
+
+
+bool EEPROMStorageHandler::checkPinEquals(uint32_t pin_entered) {
+	uint8_t pin[] = { 0, 0, 0, 0 };
+
+	for (size_t i = 0; i < 4; i++)
+	{
+		pin[i] = eeprom_read_byte(_pinBaseAddress + (i * 4) + i);
+	}
+
+	return convertToInt32(&pin[0]) == pin_entered;
+}
+
+void EEPROMStorageHandler::setPin(uint32_t new_pin) {
+	//throw "Not implemented method";
+}
+
+#pragma endregion
+
+
+#pragma region BlockIndicators
+
+
+/*
+	Sets boolean value (is7ByteBlock) to bit at block_index position (0-31), if block_index is out of range it terminates
+*/
+void EEPROMStorageHandler::setCardBlockType(unsigned char block_index, bool is7ByteBlock) {
+
+	unsigned char block_position = block_index / 8;
+	unsigned char bit_position = block_index % 8;
+	unsigned char block = getCardBlock(block_index);
+
+	if (block == 255) {
+		return;
+	}
+
+	unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
+
+	block ^= (-is7ByteBlock ^ block) & bit;
+
+	eeprom_write_byte(_4B7BBlocksBaseAddress + block_position, block);	
+}
+
+/*
+	Returns card type block (1B) based on block_index, when block_index > 31 || block_index < 0 then 255 is returned
+*/
+unsigned char EEPROMStorageHandler::getCardBlock(unsigned char block_index) {
+
+	if (block_index > 31 || block_index < 0) {
+		return 255; //ERROR
+	}
+
+	unsigned char block_position = block_index / 8;
+	unsigned char block = eeprom_read_byte(_4B7BBlocksBaseAddress + block_position);
+
+	return block;
+}
+
+/*
+	Returns true, when block at index (0-31) has flag set to 1, false otherwise
+*/
+bool EEPROMStorageHandler::isCardBlock7B(unsigned char block_index) {
+
+	unsigned char block = getCardBlock(block_index);
+
+	if (block == 255) {
+		return false;
+	}
+
+	unsigned char bit_position = block_index % 8;
+	unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
+
+	return (block & bit) > 0;
 }
 
 #pragma endregion

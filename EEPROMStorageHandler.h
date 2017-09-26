@@ -28,18 +28,13 @@ private:
 		
 	//TODO: below
 
-	//void setCardBlockType(uint8_t block_index, bool is7ByteBlock);
-	//bool isCardBlock7B(uint8_t block_index);
 
 	//uint32_t getNew4BCardAddress();
 	//void shift4BCardAddress(); - to new empty space
 
 	//uint32_t getNew7BCardAddress();
 	//void shift7BCardAddress(); - to new empty space
-
-	//bool checkPin(uint32_t pin_entered);
-	//void changePin(uint32_t new_pin);	
-
+	
 	//bool saveNew4BCard(uint8_t * uid);
 	//bool delete4BCard(uint8_t * uid);
 
@@ -47,6 +42,8 @@ private:
 	//bool delete7BCard(uint8_t * uid);
 
 	unsigned char _numberOfRecords = 0;
+	unsigned char _pinBaseAddress = 21;
+	unsigned char _4B7BBlocksBaseAddress = 9;
 	
 	//TODO 8B
 	uint32_m _masterCardId;
@@ -55,8 +52,11 @@ private:
 public:
 	EEPROMStorageHandler(HardwareSerial* serial);
 	bool isMasterCard(uint8_t* uid, uint8_t uid_length);
-	void registerNewCard(uint8_t * cardId);
-	bool isCardRegistered(uint8_t * cardId);
+	void registerNewCard(uint8_t * cardId, uint8_t uid_length);
+	bool isCardRegistered(uint8_t * cardId, uint8_t uid_length);
+	void setCardBlockType(unsigned char block_index, bool is7ByteBlock);
+	bool isCardBlock7B(unsigned char block_index);
+
 private:
 	uint32_m getCardAtIndex(unsigned char i);
 
@@ -66,8 +66,7 @@ private:
 	void increaseNumberOfCards();
 	void decreaseNumberOfCards();
 
-
-	bool isMasterCard(uint8_t* uid, uint8_t uid_length);
+	//Master Card
 	void setMasterCard(uint8_t* uid, uint8_t uid_length);
 	void setMasterCardSizeIndicator(bool is7Byte);  // private
 	bool getMasterCardSizeIndicator();  // private
@@ -76,4 +75,11 @@ private:
 	uint32_m getMasterCardId();
 	uint32_m convertToInt32(uint8_t * uid);
 
+
+	bool checkPinEquals(uint32_t pin_entered);
+	void setPin(uint32_t new_pin);
+
+
+	//4B/7B Block indicators
+	unsigned char getCardBlock(unsigned char block_index);
 };
