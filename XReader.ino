@@ -1,4 +1,3 @@
-
 #include <Adafruit_PN532.h>
 #include <Wire.h>
 #include <SPI.h>

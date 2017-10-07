@@ -15,7 +15,9 @@ void XReader::begin()
   _eepromStorage = new EEPROMStorageHandler(&Serial);
   pinMode(_blueLed, OUTPUT);
   pinMode(_greenLed, OUTPUT);
-  switchOnLed(_greenLed);
+  pinMode(_redLed, OUTPUT);
+  pinMode(_buzzer, OUTPUT);
+  switchOnLed(_blueLed);
 
   _board->begin();
 }
@@ -39,94 +41,108 @@ void XReader::checkConnectionToPn532()
 
 void XReader::loopProcedure()
 {
-	boolean success;
+	Serial.println("LOOP");
 	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };	// Buffer to store the returned UID
 	uint8_t uidLength;				// Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 
 									// Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
 									// 'uid' will be populated with the UID, and uidLength will indicate
 									// if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
-	success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
+
+	const boolean success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 
 	if (success) {
 
 		if (_eepromStorage->isMasterCard(&uid[0], uidLength)) {
 			Serial.println("=======THIS IS MASTERCARD======"); 
 			Serial.println("Waiting for new card to register...");
+			_consecutiveFails = 0;
 
 			delay(1000); // delay otherwise it'd register master card
-			switchOnLed(_blueLed);
+			switchOnLed(_greenLed);
+			switchOffLed(_blueLed);
 
 			_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 			_eepromStorage->registerNewCard(&uid[0], uidLength);
 
-			switchOffLed(_blueLed);
+			switchOffLed(_greenLed);
+			switchOnLed(_blueLed);
 
 		}else if (_eepromStorage->isCardRegistered(&uid[0], uidLength)) {
 			Serial.println("=======THIS IS REGISTERED CARD======");
+			_consecutiveFails = 0;
 
-			switchOnLed(_blueLed);
-			switchOnLed(_buzzer);
-			//TODO: open door for 3s
-			//TODO: sound buzzer
-			delay(2000);
-
-			//TODO: close door
-			//TODO: mute buzzer
 			switchOffLed(_blueLed);
-			switchOffLed(_buzzer);
+			switchOnLed(_greenLed);
+			switchSuccessAuthBuzzerOn();
+
+			delay(DOOR_OPENED_INTERVAL);
+
+			switchOffLed(_greenLed);
+			switchOnLed(_blueLed);
 		}
 		else {
 			Serial.println("#######THIS IS NOT REGISTERED CARD ######");
+			_consecutiveFails++;
+
+			//TODO: 
+			switchOffLed(_blueLed);
+			switchOnLed(_redLed); 
+			soundUnsuccessAuthBuzzer();
+
+			const unsigned int logDelay = log(_consecutiveFails) * 1000;
+
+			//incremental delay
+			delay(logDelay);
 			
 			//TODO: 
-			switchOnLed(_redLed); 
-			switchOnLed(_buzzer);
-			delay(2000);
-			//TODO: 
 			switchOffLed(_redLed);
-			switchOffLed(_buzzer);
+			switchOnLed(_blueLed);
 		}
 	}
 	else
 	{
 		// PN532 probably timed out waiting for a card
 		Serial.println("Timed out waiting for a card");
+
+
+		Serial.print("Time: "); Serial.println(millis());
 	}
 }
 
-void XReader::initBoard()
+void XReader::initBoard() const
 {
 	// Set the max number of retry attempts to read from a card
 	// This prevents us from waiting forever for a card, which is
 	// the default behaviour of the PN532.
-	_board->setPassiveActivationRetries(0xFF);
+	//0xFF
+	_board->setPassiveActivationRetries(0x01);
 
 	// configure board to read RFID tags
 	_board->SAMConfig();
 
 	Serial.println("Waiting for an ISO14443A card");
 
-
-	_eepromStorage->setCardBlockType(1, true);
-	_eepromStorage->isCardBlock7B(1);
-	_eepromStorage->setCardBlockType(9, true);
-	_eepromStorage->isCardBlock7B(9);
-	_eepromStorage->setCardBlockType(17, true);
-	_eepromStorage->isCardBlock7B(17);
-	_eepromStorage->setCardBlockType(25, true);
-	_eepromStorage->isCardBlock7B(25);
-
-
-
-	_eepromStorage->isCardBlock7B(0);
-	_eepromStorage->isCardBlock7B(2);
 }
 
-void XReader::switchOnLed(unsigned char ledPin) {
+void XReader::switchOnLed(const unsigned char ledPin) {
 	digitalWrite(ledPin, HIGH);
 }
 
-void XReader::switchOffLed(unsigned char ledPin) {
+void XReader::switchOffLed(const unsigned char ledPin) {
 	digitalWrite(ledPin, LOW);
+}
+
+void XReader::soundUnsuccessAuthBuzzer() const
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		tone(_buzzer, INVALID_SOUND, 200);
+		delay(300);
+	}
+}
+
+void XReader::switchSuccessAuthBuzzerOn() const
+{
+	tone(_buzzer, VALID_SOUND, 1000);
 }
