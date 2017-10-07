@@ -18,6 +18,8 @@ void XReader::begin()
   pinMode(_greenLedPin, OUTPUT);
   pinMode(_redLedPin, OUTPUT);
   pinMode(_buzzerPin, OUTPUT);
+  pinMode(_openDoorPin, OUTPUT);
+
   switchOnLed(_blueLedPin);
 
   _board->begin();
@@ -61,7 +63,8 @@ void XReader::loopProcedure()
 		}
 		else 
 		{
-			unsuccessfulAuth();
+			successfulAuth();
+			//unsuccessfulAuth();
 		}
 	}
 	else
@@ -118,6 +121,7 @@ void XReader::unsuccessfulAuth()
 
 	const unsigned int logDelay = log(_consecutiveFails) * 1000;
 
+
 	//incremental delay
 	delay(logDelay);
 
@@ -132,11 +136,9 @@ void XReader::successfulAuth()
 
 	switchOffLed(_blueLedPin);
 	switchOnLed(_greenLedPin);
-	switchSuccessAuthBuzzerOn();
+	//switchSuccessAuthBuzzerOn();
 
-	//TODO: OPEN DOOR
-	delay(DOOR_OPENED_INTERVAL);
-	//TODO: CLOSE DOOR
+	openDoor();
 
 	switchOffLed(_greenLedPin);
 	switchOnLed(_blueLedPin);
@@ -161,4 +163,11 @@ void XReader::registeringNewCard()
 
 	switchOffLed(_greenLedPin);
 	switchOnLed(_blueLedPin);
+}
+
+void XReader::openDoor() const
+{
+	switchOnLed(_openDoorPin);
+	delay(DOOR_OPENED_INTERVAL);
+	switchOffLed(_openDoorPin);	
 }

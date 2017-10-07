@@ -5,7 +5,7 @@
 #define PN532_SS   (10)
 #define INVALID_SOUND (261)
 #define VALID_SOUND (3000)
-#define DOOR_OPENED_INTERVAL  3000
+#define DOOR_OPENED_INTERVAL  5000
 //#define DEBUG
 
 class XReader {
@@ -16,6 +16,7 @@ class XReader {
   const unsigned char	_blueLedPin = 8;
   const unsigned char	_greenLedPin = 7;
   const unsigned char	_redLedPin = 9;
+  const unsigned char   _openDoorPin = 3;
   const unsigned char	_buzzerPin = 2;
 
   unsigned int			_consecutiveFails = 0;
@@ -81,4 +82,6 @@ private:
 	* \brief Handles registration of new card after master card was successfully read, switches LED's and buzzer
 	*/
 	void registeringNewCard();
+
+	void openDoor() const;
 };
