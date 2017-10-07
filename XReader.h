@@ -49,13 +49,13 @@ private:
 	* \brief Switches on Pin at \param ledPin
 	* \param ledPin Pin to be switched on
 	*/
-	static void switchOnLed(unsigned char ledPin);
+	static void switchPinOn(unsigned char ledPin);
 
 	/**
 	* \brief Switches off Pin at \param ledPin
 	* \param ledPin Pin to be switched off
 	*/
-	static void switchOffLed(unsigned char ledPin);
+	static void switchPinOff(unsigned char ledPin);
 
 	/**
 	* \brief Switches on buzzer sound for unsuccessful authorization, shuts down after 1s

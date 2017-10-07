@@ -20,7 +20,7 @@ void XReader::begin()
   pinMode(_buzzerPin, OUTPUT);
   pinMode(_openDoorPin, OUTPUT);
 
-  switchOnLed(_blueLedPin);
+  switchPinOn(_blueLedPin);
 
   _board->begin();
 
@@ -88,11 +88,11 @@ void XReader::initBoard() const
 
 }
 
-void XReader::switchOnLed(const unsigned char ledPin) {
+void XReader::switchPinOn(const unsigned char ledPin) {
 	digitalWrite(ledPin, HIGH);
 }
 
-void XReader::switchOffLed(const unsigned char ledPin) {
+void XReader::switchPinOff(const unsigned char ledPin) {
 	digitalWrite(ledPin, LOW);
 }
 
@@ -115,8 +115,8 @@ void XReader::unsuccessfulAuth()
 	Serial.println("#######THIS IS NOT REGISTERED CARD ######");
 	_consecutiveFails++;
 
-	switchOffLed(_blueLedPin);
-	switchOnLed(_redLedPin);
+	switchPinOff(_blueLedPin);
+	switchPinOn(_redLedPin);
 	soundUnsuccessAuthBuzzerOn();
 
 	const unsigned int logDelay = log(_consecutiveFails) * 1000;
@@ -125,8 +125,8 @@ void XReader::unsuccessfulAuth()
 	//incremental delay
 	delay(logDelay);
 
-	switchOffLed(_redLedPin);
-	switchOnLed(_blueLedPin);
+	switchPinOff(_redLedPin);
+	switchPinOn(_blueLedPin);
 }
 
 void XReader::successfulAuth()
@@ -134,14 +134,14 @@ void XReader::successfulAuth()
 	Serial.println("=======THIS IS REGISTERED CARD======");
 	_consecutiveFails = 0;
 
-	switchOffLed(_blueLedPin);
-	switchOnLed(_greenLedPin);
+	switchPinOff(_blueLedPin);
+	switchPinOn(_greenLedPin);
 	//switchSuccessAuthBuzzerOn();
 
 	openDoor();
 
-	switchOffLed(_greenLedPin);
-	switchOnLed(_blueLedPin);
+	switchPinOff(_greenLedPin);
+	switchPinOn(_blueLedPin);
 }
 
 void XReader::registeringNewCard()
@@ -153,21 +153,21 @@ void XReader::registeringNewCard()
 
 	Serial.println("Waiting for new card to register...");
 	delay(1000); // delay otherwise it'd register master card
-	switchOnLed(_greenLedPin);
-	switchOffLed(_blueLedPin);
+	switchPinOn(_greenLedPin);
+	switchPinOff(_blueLedPin);
 
 	_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 	_eepromStorage->registerNewCard(&uid[0], uidLength);
 
 	//TODO: maybe add sound confirmation? Blink?
 
-	switchOffLed(_greenLedPin);
-	switchOnLed(_blueLedPin);
+	switchPinOff(_greenLedPin);
+	switchPinOn(_blueLedPin);
 }
 
 void XReader::openDoor() const
 {
-	switchOnLed(_openDoorPin);
+	switchPinOn(_openDoorPin);
 	delay(DOOR_OPENED_INTERVAL);
-	switchOffLed(_openDoorPin);	
+	switchPinOff(_openDoorPin);	
 }
