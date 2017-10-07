@@ -12,7 +12,7 @@ EEPROMStorageHandler::EEPROMStorageHandler(HardwareSerial* serial)
 
 
 uint32_m EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
-	return ((uint32_m)uid[0] << 24) | ((uint32_m)uid[1] << 16) | ((uint32_m)uid[2] << 8) | ((uint32_m)uid[3]);
+	return (uint32_m(uid[0]) << 24) | (uint32_m(uid[1]) << 16) | (uint32_m(uid[2]) << 8) | uint32_m(uid[3]);
 }
 
 #pragma region Master Card
@@ -20,7 +20,7 @@ uint32_m EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
 bool EEPROMStorageHandler::getMasterCardSizeIndicator() 
 {
 	//true -> 7B, false -> 4B
-	return ((bool) eeprom_read_byte(8));
+	return bool(eeprom_read_byte(8));
 }
 
 void EEPROMStorageHandler::setMasterCardSizeIndicator(bool is7Byte)
@@ -41,19 +41,19 @@ uint32_m EEPROMStorageHandler::getMasterCardId()
 	// TODO: CHANGE TO 4B/7B version
 	uint32_m i = convertToInt32(&uid[0]);
 
-	Serial.print("MASTER CARD VALUE: "); Serial.println((uint32_m)i);
+	Serial.print("MASTER CARD VALUE: "); Serial.println(uint32_m(i));
 
 	return i;
 }
 
-bool EEPROMStorageHandler::isMasterCard(uint8_t* uid, uint8_t uid_length)
+bool EEPROMStorageHandler::isMasterCard(uint8_t* uid, uint8_t uid_length) const
 {
 	return _masterCardId == convertToInt32(uid);
 }
 
 void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
 {
-	setMasterCardSizeIndicator(uid_length == ((size_t) uid_length));
+	setMasterCardSizeIndicator(uid_length == size_t(uid_length));
 
 	for (size_t i = 0; i < uid_length; i++)
 	{
@@ -83,18 +83,23 @@ void EEPROMStorageHandler::registerNewCard(uint8_t* cardId, uint8_t uid_length) 
 		this->setNumberOfCards(++_numberOfRecords);
 #ifdef DEBUG
 		_serial->print("_numberOfRecords IS "); _serial->println((unsigned char)_numberOfRecords, DEC);
-#endif // DEBUG
-
 		_serial->println("New card successfully registered!");
+#endif // DEBUG
 	}
 	else if (isAlreadyRegistered) {
+#ifdef DEBUG
 		_serial->println("ERROR: Card is already registered.");
+#endif // DEBUG
 	}
 	else if (isMasterCard) {
+#ifdef DEBUG
 		_serial->println("ERROR: Cannot save master card.");
+#endif // DEBUG
 	}
 	else {
+#ifdef DEBUG
 		_serial->println("ERROR: Cannot save new card.");
+#endif // DEBUG
 	}
 }
 
