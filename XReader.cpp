@@ -21,6 +21,8 @@ void XReader::begin()
   switchOnLed(_blueLedPin);
 
   _board->begin();
+
+  checkConnectionToPn532();
 }
 
 void XReader::checkConnectionToPn532() const
@@ -42,8 +44,8 @@ void XReader::checkConnectionToPn532() const
 
 void XReader::loopProcedure()
 {
-	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };	// Buffer to store the returned UID
-	uint8_t uidLength;				// Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
+	uint8_t uidLength;
 
 	const boolean success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 
@@ -65,7 +67,6 @@ void XReader::loopProcedure()
 	else
 	{
 #ifdef DEBUG
-		// PN532 probably timed out waiting for a card
 		Serial.println("Timed out waiting for a card");
 		Serial.print("Time: "); Serial.println(millis());
 #endif
@@ -74,9 +75,6 @@ void XReader::loopProcedure()
 
 void XReader::initBoard() const
 {
-	// Set the max number of retry attempts to read from a card
-	// This prevents us from waiting forever for a card, which is
-	// the default behaviour of the PN532.
 	//0xFF
 	_board->setPassiveActivationRetries(0x01);
 
@@ -159,7 +157,7 @@ void XReader::registeringNewCard()
 	_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 	_eepromStorage->registerNewCard(&uid[0], uidLength);
 
-	//maybe add sound confirmation? Blink?
+	//TODO: maybe add sound confirmation? Blink?
 
 	switchOffLed(_greenLedPin);
 	switchOnLed(_blueLedPin);

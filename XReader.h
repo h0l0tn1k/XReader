@@ -9,7 +9,7 @@
 //#define DEBUG
 
 class XReader {
-private:
+
   Adafruit_PN532*		_board;
   EEPROMStorageHandler* _eepromStorage;
 
@@ -19,6 +19,7 @@ private:
   const unsigned char	_buzzerPin = 2;
 
   unsigned int			_consecutiveFails = 0;
+
 public:
 	/**
 	* \brief Constructor: Initializes class variables
@@ -34,6 +35,7 @@ public:
 	* \brief Reads from PN532 in loop
 	*/
 	void loopProcedure();
+
 private:
 	void initBoard() const;
 

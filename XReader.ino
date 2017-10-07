@@ -8,8 +8,6 @@ XReader* xreader = new XReader();
 void setup()
 {
 	xreader->begin();
-
-	xreader->checkConnectionToPn532();
 }
 
 void loop()
