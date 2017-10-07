@@ -11,26 +11,72 @@
 class XReader {
 private:
   Adafruit_PN532*		_board;
-  const unsigned char	_blueLed = 8;
-  const unsigned char	_greenLed = 7;
-  const unsigned char	_redLed = 9;
-  const unsigned char	_buzzer = 2;
   EEPROMStorageHandler* _eepromStorage;
+
+  const unsigned char	_blueLedPin = 8;
+  const unsigned char	_greenLedPin = 7;
+  const unsigned char	_redLedPin = 9;
+  const unsigned char	_buzzerPin = 2;
+
   unsigned int			_consecutiveFails = 0;
 public:
+	/**
+	* \brief Constructor: Initializes class variables
+	*/
 	XReader();
+
+	/**
+	* \brief Initializes variables, pins and starts PN532 board
+	*/
 	void begin();
-	void checkConnectionToPn532();
+
+	/**
+	* \brief Reads from PN532 in loop
+	*/
 	void loopProcedure();
 private:
 	void initBoard() const;
+
+	/**
+	* \brief Checks whether connection to PN532 was successful, if yes, inits board otherwise halts
+	*/
+	void checkConnectionToPn532() const;
+
+	/**
+	* \brief Switches on Pin at \param ledPin
+	* \param ledPin Pin to be switched on
+	*/
 	static void switchOnLed(unsigned char ledPin);
+
+	/**
+	* \brief Switches off Pin at \param ledPin
+	* \param ledPin Pin to be switched off
+	*/
 	static void switchOffLed(unsigned char ledPin);
-	void soundUnsuccessAuthBuzzer() const;
+
+	/**
+	* \brief Switches on buzzer sound for unsuccessful authorization, shuts down after 1s
+	*/
+	void soundUnsuccessAuthBuzzerOn() const;
+
+	/**
+	* \brief Switches on buzzer sound for successful authorization, shuts down after 1s
+	*/
 	void switchSuccessAuthBuzzerOn() const;
 
 
+	/**
+	* \brief Handles unsuccessful RFID Card authorization to XReader by sounding buzzer, switching LED's and by delaying of next attempt
+	*/
 	void unsuccessfulAuth();
+
+	/**
+	* \brief Handles successful authorization to XReader by sounding buzzer, triggering of door opening and switching LED's
+	*/
 	void successfulAuth();
-	void registeringNewCard(uint8_t* uid, uint8_t uidLength);
+
+	/**
+	* \brief Handles registration of new card after master card was successfully read, switches LED's and buzzer
+	*/
+	void registeringNewCard();
 };

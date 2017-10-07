@@ -1,8 +1,9 @@
 #include "XReader.h"
 
-XReader::XReader() {
-
+XReader::XReader() 
+{
 	_board = new Adafruit_PN532(PN532_SS);
+	_eepromStorage = nullptr;
 }
 
 void XReader::begin()
@@ -13,21 +14,21 @@ void XReader::begin()
 	Serial.begin(115200);
 	
   _eepromStorage = new EEPROMStorageHandler(&Serial);
-  pinMode(_blueLed, OUTPUT);
-  pinMode(_greenLed, OUTPUT);
-  pinMode(_redLed, OUTPUT);
-  pinMode(_buzzer, OUTPUT);
-  switchOnLed(_blueLed);
+  pinMode(_blueLedPin, OUTPUT);
+  pinMode(_greenLedPin, OUTPUT);
+  pinMode(_redLedPin, OUTPUT);
+  pinMode(_buzzerPin, OUTPUT);
+  switchOnLed(_blueLedPin);
 
   _board->begin();
 }
 
-void XReader::checkConnectionToPn532()
+void XReader::checkConnectionToPn532() const
 {
-	uint32_t versiondata = _board->getFirmwareVersion();
-	if (!versiondata) {
+	const uint32_t versionData = _board->getFirmwareVersion();
+	if (!versionData) {
 		Serial.print("Didn't find PN53x board");
-		while (1); // halt
+		while (true); // halt
 	}
 
 #ifdef DEBUG
@@ -50,7 +51,7 @@ void XReader::loopProcedure()
 	{
 		if (_eepromStorage->isMasterCard(&uid[0], uidLength)) 
 		{
-			registeringNewCard(&uid[0], uidLength);
+			registeringNewCard();
 		}
 		else if (_eepromStorage->isCardRegistered(&uid[0], uidLength)) 
 		{
@@ -94,18 +95,18 @@ void XReader::switchOffLed(const unsigned char ledPin) {
 	digitalWrite(ledPin, LOW);
 }
 
-void XReader::soundUnsuccessAuthBuzzer() const
+void XReader::soundUnsuccessAuthBuzzerOn() const
 {
 	for (int i = 0; i < 3; ++i)
 	{
-		tone(_buzzer, INVALID_SOUND, 200);
-		delay(300);
+		tone(_buzzerPin, INVALID_SOUND, 200);
+		delay(333);
 	}
 }
 
 void XReader::switchSuccessAuthBuzzerOn() const
 {
-	tone(_buzzer, VALID_SOUND, 1000);
+	tone(_buzzerPin, VALID_SOUND, 1000);
 }
 
 void XReader::unsuccessfulAuth()
@@ -113,17 +114,17 @@ void XReader::unsuccessfulAuth()
 	Serial.println("#######THIS IS NOT REGISTERED CARD ######");
 	_consecutiveFails++;
 
-	switchOffLed(_blueLed);
-	switchOnLed(_redLed);
-	soundUnsuccessAuthBuzzer();
+	switchOffLed(_blueLedPin);
+	switchOnLed(_redLedPin);
+	soundUnsuccessAuthBuzzerOn();
 
 	const unsigned int logDelay = log(_consecutiveFails) * 1000;
 
 	//incremental delay
 	delay(logDelay);
 
-	switchOffLed(_redLed);
-	switchOnLed(_blueLed);
+	switchOffLed(_redLedPin);
+	switchOnLed(_blueLedPin);
 }
 
 void XReader::successfulAuth()
@@ -131,31 +132,35 @@ void XReader::successfulAuth()
 	Serial.println("=======THIS IS REGISTERED CARD======");
 	_consecutiveFails = 0;
 
-	switchOffLed(_blueLed);
-	switchOnLed(_greenLed);
+	switchOffLed(_blueLedPin);
+	switchOnLed(_greenLedPin);
 	switchSuccessAuthBuzzerOn();
 
+	//TODO: OPEN DOOR
 	delay(DOOR_OPENED_INTERVAL);
+	//TODO: CLOSE DOOR
 
-	switchOffLed(_greenLed);
-	switchOnLed(_blueLed);
+	switchOffLed(_greenLedPin);
+	switchOnLed(_blueLedPin);
 }
 
-void XReader::registeringNewCard(uint8_t* uid, uint8_t uidLength)
+void XReader::registeringNewCard()
 {
+	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
+	uint8_t uidLength;
 	Serial.println("=======THIS IS MASTERCARD======");
 	_consecutiveFails = 0;
 
 	Serial.println("Waiting for new card to register...");
 	delay(1000); // delay otherwise it'd register master card
-	switchOnLed(_greenLed);
-	switchOffLed(_blueLed);
+	switchOnLed(_greenLedPin);
+	switchOffLed(_blueLedPin);
 
 	_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 	_eepromStorage->registerNewCard(&uid[0], uidLength);
 
 	//maybe add sound confirmation? Blink?
 
-	switchOffLed(_greenLed);
-	switchOnLed(_blueLed);
+	switchOffLed(_greenLedPin);
+	switchOnLed(_blueLedPin);
 }
