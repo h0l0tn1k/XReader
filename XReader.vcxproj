@@ -85,11 +85,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EEPROMStorageHandler.h" />
+    <ClInclude Include="SoundHelper.h" />
     <ClInclude Include="XReader.h" />
     <ClInclude Include="__vm\.XReader.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EEPROMStorageHandler.cpp" />
+    <ClCompile Include="SoundHelper.cpp" />
     <ClCompile Include="XReader.cpp" />
   </ItemGroup>
   <PropertyGroup>

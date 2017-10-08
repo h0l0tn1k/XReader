@@ -4,6 +4,7 @@ XReader::XReader()
 {
 	_board = new Adafruit_PN532(PN532_SS);
 	_eepromStorage = nullptr;
+	_soundHelper = new SoundHelper(_buzzerPin);
 }
 
 void XReader::begin()
@@ -17,14 +18,15 @@ void XReader::begin()
   pinMode(_blueLedPin, OUTPUT);
   pinMode(_greenLedPin, OUTPUT);
   pinMode(_redLedPin, OUTPUT);
-  pinMode(_buzzerPin, OUTPUT);
+  //responsibility of SoundHelper noow pinMode(_buzzerPin, OUTPUT);
   pinMode(_openDoorPin, OUTPUT);
-
-  switchPinOn(_blueLedPin);
-
+  pinMode(_button1Pin, INPUT);
+  
   _board->begin();
 
   checkConnectionToPn532();
+
+  switchPinOn(_blueLedPin);
 }
 
 void XReader::checkConnectionToPn532() const
@@ -49,6 +51,13 @@ void XReader::loopProcedure()
 	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
 	uint8_t uidLength;
 
+	if(digitalRead(_button1Pin) == HIGH)
+	{
+		while (digitalRead(_button1Pin) == HIGH);
+		Serial.println("BUTTON 1 PRESSED.");
+		//TODO: BUTTON 1 PRESSED
+	}
+
 	const boolean success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
 
 	if (success) 
@@ -63,8 +72,7 @@ void XReader::loopProcedure()
 		}
 		else 
 		{
-			successfulAuth();
-			//unsuccessfulAuth();
+			unsuccessfulAuth();
 		}
 	}
 	else
@@ -96,19 +104,6 @@ void XReader::switchPinOff(const unsigned char ledPin) {
 	digitalWrite(ledPin, LOW);
 }
 
-void XReader::soundUnsuccessAuthBuzzerOn() const
-{
-	for (int i = 0; i < 3; ++i)
-	{
-		tone(_buzzerPin, INVALID_SOUND, 200);
-		delay(333);
-	}
-}
-
-void XReader::switchSuccessAuthBuzzerOn() const
-{
-	tone(_buzzerPin, VALID_SOUND, 1000);
-}
 
 void XReader::unsuccessfulAuth()
 {
@@ -117,10 +112,9 @@ void XReader::unsuccessfulAuth()
 
 	switchPinOff(_blueLedPin);
 	switchPinOn(_redLedPin);
-	soundUnsuccessAuthBuzzerOn();
+	_soundHelper->soundUnsuccessAuthBuzzerOn();
 
 	const unsigned int logDelay = log(_consecutiveFails) * 1000;
-
 
 	//incremental delay
 	delay(logDelay);
@@ -136,7 +130,7 @@ void XReader::successfulAuth()
 
 	switchPinOff(_blueLedPin);
 	switchPinOn(_greenLedPin);
-	//switchSuccessAuthBuzzerOn();
+	_soundHelper->switchSuccessAuthBuzzerOn();
 
 	openDoor();
 
@@ -152,17 +146,53 @@ void XReader::registeringNewCard()
 	_consecutiveFails = 0;
 
 	Serial.println("Waiting for new card to register...");
-	delay(1000); // delay otherwise it'd register master card
 	switchPinOn(_greenLedPin);
 	switchPinOff(_blueLedPin);
 
-	_board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-	_eepromStorage->registerNewCard(&uid[0], uidLength);
+	_soundHelper->soundSuccessNoticeSound();
+	delay(1000);
+	_soundHelper->waitingForNewCardSound();
+
+
+	_board->setPassiveActivationRetries(0xFF);//wait for new card until it is read.
+
+	const unsigned long mills = millis();
+	bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength, 10000);
+
+	_soundHelper->stopSound();
+	
+	Serial.print("Milliseconds: "); Serial.print(millis() - mills); Serial.println("ms.");
+	
+	//_eepromStorage->registerNewCard(&uid[0], uidLength);
 
 	//TODO: maybe add sound confirmation? Blink?
 
-	switchPinOff(_greenLedPin);
+	
+	if(success)
+	{
+		delay(300);
+		_soundHelper->switchSuccessAuthBuzzerOn();
+
+		for (size_t i = 0; i < 10; i++)
+		{
+			delay(50);
+			switchPinOn(_greenLedPin);
+			delay(50);
+			switchPinOff(_greenLedPin);
+		}
+	} 
+	else
+	{
+		switchPinOff(_greenLedPin);
+		switchPinOn(_redLedPin);
+		_soundHelper->soundUnsuccessAuthBuzzerOn();
+		delay(500);
+		switchPinOff(_redLedPin);
+	}
+
+	delay(1000);
 	switchPinOn(_blueLedPin);
+	_board->setPassiveActivationRetries(0x01);
 }
 
 void XReader::openDoor() const

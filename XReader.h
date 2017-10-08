@@ -1,6 +1,7 @@
 #pragma once
 #include <Adafruit_PN532.h>
 #include "EEPROMStorageHandler.h"
+#include "SoundHelper.h"
 
 #define PN532_SS   (10)
 #define INVALID_SOUND (261)
@@ -12,10 +13,12 @@ class XReader {
 
   Adafruit_PN532*		_board;
   EEPROMStorageHandler* _eepromStorage;
+  SoundHelper*			_soundHelper;
 
+  const unsigned char	_redLedPin = 9;
   const unsigned char	_blueLedPin = 8;
   const unsigned char	_greenLedPin = 7;
-  const unsigned char	_redLedPin = 9;
+  const unsigned char	_button1Pin = 4;
   const unsigned char   _openDoorPin = 3;
   const unsigned char	_buzzerPin = 2;
 
@@ -56,17 +59,7 @@ private:
 	* \param ledPin Pin to be switched off
 	*/
 	static void switchPinOff(unsigned char ledPin);
-
-	/**
-	* \brief Switches on buzzer sound for unsuccessful authorization, shuts down after 1s
-	*/
-	void soundUnsuccessAuthBuzzerOn() const;
-
-	/**
-	* \brief Switches on buzzer sound for successful authorization, shuts down after 1s
-	*/
-	void switchSuccessAuthBuzzerOn() const;
-
+	
 
 	/**
 	* \brief Handles unsuccessful RFID Card authorization to XReader by sounding buzzer, switching LED's and by delaying of next attempt

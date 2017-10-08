@@ -27,12 +27,18 @@
     <ClInclude Include="EEPROMStorageHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SoundHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EEPROMStorageHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
