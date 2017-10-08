@@ -72,7 +72,8 @@ void XReader::loopProcedure()
 		}
 		else 
 		{
-			unsuccessfulAuth();
+			successfulAuth();
+			//unsuccessfulAuth();
 		}
 	}
 	else
@@ -130,7 +131,7 @@ void XReader::successfulAuth()
 
 	switchPinOff(_blueLedPin);
 	switchPinOn(_greenLedPin);
-	_soundHelper->switchSuccessAuthBuzzerOn();
+	//_soundHelper->switchSuccessAuthBuzzerOn();
 
 	openDoor();
 
@@ -157,17 +158,14 @@ void XReader::registeringNewCard()
 	_board->setPassiveActivationRetries(0xFF);//wait for new card until it is read.
 
 	const unsigned long mills = millis();
-	bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength, 10000);
+	const bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength, 10000);
 
 	_soundHelper->stopSound();
 	
 	Serial.print("Milliseconds: "); Serial.print(millis() - mills); Serial.println("ms.");
 	
 	//_eepromStorage->registerNewCard(&uid[0], uidLength);
-
-	//TODO: maybe add sound confirmation? Blink?
-
-	
+		
 	if(success)
 	{
 		delay(300);
