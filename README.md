@@ -10,9 +10,9 @@ XReader is controller for Arduino UNO which in conjuction with PN532 NFC/RFID mo
 
 ### Links
 - Arduino source code
--- https://github.com/h0l0tn1k/XReader
+  - https://github.com/h0l0tn1k/XReader
 - Android app source code
--- https://github.com/h0l0tn1k/MultiAccess
+  - https://github.com/h0l0tn1k/MultiAccess
 
 ### Hardware components
 - Arduino UNO 
@@ -20,7 +20,7 @@ XReader is controller for Arduino UNO which in conjuction with PN532 NFC/RFID mo
 - PN532 RFID & NFC reader
 - Buzzer
 - 5V to 12V Step up DC converter
--- for Buzzer, K212 & Solenoid Lock
+  - for Buzzer, K212 & Solenoid Lock
 - Solenoid lock
 - Capacitive switches
 - K212 control board
@@ -33,13 +33,13 @@ XReader is controller for Arduino UNO which in conjuction with PN532 NFC/RFID mo
 
 ## Progress
 1. Draft Android application created:
-- Capable of storing (new/old) keys encrypted and decrypted by fingerprint reader
+  - Capable of storing (new/old) keys encrypted and decrypted by fingerprint reader
 2. Arduino connected with PN532 reader
 3. Draft Arduino Controller created:
-4. Capable of Defining Master Card, registering & storing new cards, determining if card is registered or not
-5. K212 with R305 powered from arduino using Step Up DC Converter 
-6. Case for testing purposes
-7. Initial memory storage handling
-8. LED's controlling
-9. Buzzer sounds handling
-10. Opening door using pin 3 and connecting it with transistor to K212 Boar's OPEN signal
+  - Capable of Defining Master Card, registering & storing new cards, determining if card is registered or not
+4. K212 with R305 powered from arduino using Step Up DC Converter 
+5. Case for testing purposes
+6. Initial memory storage handling
+7. LED's controlling
+8. Buzzer sounds handling
+9. Opening door using pin 3 and connecting it with transistor to K212 Boar's OPEN signal
