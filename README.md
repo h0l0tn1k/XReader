@@ -6,6 +6,10 @@ This page contains information about arduino project that I'm currently working 
 
 XReader is controller for Arduino UNO which in conjuction with PN532 NFC/RFID module and further in the future with finger print sensor will act as door gate. This project is for my diploma thesis. 
 
+## Pictures
+<img src="pictures/1s.jpg" width="200"><img src="pictures/2s.jpg" width="200"><img src="pictures/20170916_132955[1].jpg" width="200">
+<img src="pictures/20171007_180703.jpg" width="500">
+
 ### Links
 - Arduino source code
   - https://github.com/h0l0tn1k/XReader
