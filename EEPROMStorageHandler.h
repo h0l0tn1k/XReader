@@ -4,6 +4,7 @@
 
 typedef unsigned long int uint32_m;
 
+
 class EEPROMStorageHandler {
 
 private:
@@ -14,7 +15,7 @@ private:
 
 
 	//	  13      14       15       16	  |	  17      18       19       20	   |	 21      22       23     24	  |   25     26     27    28    |
-	//###############Pnew4################|###############Pnew7################|###############PIN################|####EMPTYYYYYYY##############|
+	//###############Pnew4################|###############Pnew7################|###############PIN################|#########OCCUPANCY###########|
 
 
 	// [8]			Mastercard 4/7B indicator, 0 = 4B, 1 = 7B
@@ -22,7 +23,7 @@ private:
 	// [13-16]		Pnew4 - 4B pointer to place in memory where new 4B uid will be stored
 	// [17-20]		Pnew7 - 4B pointer to place in memory where new 7B uid will be stored
 	// [21-24]		PIN
-	// [25-28]		!!!!EMPTY!!!!!! - Mem alignment
+	// [25-28]		Block occupation
 
 	// [29-1023]	28B blocks / 35 of them
 		
@@ -42,8 +43,16 @@ private:
 	//bool delete7BCard(uint8_t * uid);
 
 	unsigned char _numberOfRecords = 0;
-	unsigned char _pinBaseAddress = 21;
-	unsigned char _4B7BBlocksBaseAddress = 9;
+	const unsigned char _masterCardBaseAddress = 1;
+	const unsigned char _masterCardSizeBaseAddress = 8;
+	const unsigned char _4B7BBlocksBaseAddress = 9;
+	const uint32_t _4BpointerBaseAddress = 13;
+	const uint32_t _7BpointerBaseAddress = 17;
+	const uint32_t _pinBaseAddress = 21;
+	const uint32_t _blockOccupationBaseAddress = 25;
+	const uint32_t _cardBlockBaseAddress = 29;
+	uint32_t _new4BCardAddress = 0;
+	uint32_t _new7BCardAddress = 0;
 	
 	//TODO 8B
 	uint32_m _masterCardId;
@@ -56,9 +65,20 @@ public:
 	bool isCardRegistered(uint8_t * cardId, uint8_t uid_length);
 	void setCardBlockType(unsigned char block_index, bool is7ByteBlock);
 	bool isCardBlock7B(unsigned char block_index);
+	
+	//TODO: DELETE AFTERWARDS
+	static void deleteMemory();
+	void setMasterCard(uint8_t* uid, uint8_t uid_length);
+	static void setMasterCardSizeIndicator(bool is7Byte);  // private
+	uint32_m getMasterCardId();
+	void registerNew7BCard(uint8_t* cardId);
+	void registerNew4BCard(uint8_t* cardId);
+	uint32_t getNew4BCardAddress();
+	uint32_t getNew7BCardAddress();
+	void printMemory();
 
-private:
-	static uint32_m getCardAtIndex(unsigned char i);
+	bool isNthBitTrue(unsigned char, unsigned char) const;
+//private:
 
 	//Number of stored cards
 	void setNumberOfCards(unsigned char count);
@@ -67,12 +87,9 @@ private:
 	void decreaseNumberOfCards();
 
 	//Master Card
-	static void setMasterCard(uint8_t* uid, uint8_t uid_length);
-	static void setMasterCardSizeIndicator(bool is7Byte);  // private
 	bool getMasterCardSizeIndicator();  // private
+	bool isBlockOccupied(unsigned char block_index);
 
-
-	uint32_m getMasterCardId();
 	static uint32_m convertToInt32(uint8_t * uid);
 
 
@@ -80,6 +97,9 @@ private:
 	void setPin(uint32_t new_pin);
 
 
+	void setBlockOccupationType(unsigned char block_index, bool isOccupied);
+	unsigned char getBlockOccupationIndicator(unsigned char block_index);
 	//4B/7B Block indicators
-	unsigned char getCardBlock(unsigned char block_index);
+	unsigned char getCardBlockIndicator(unsigned char block_index);
+	bool isCardInBlock(const unsigned char block_index, const uint8_t* cardId, const uint8_t uid_length) const;
 };

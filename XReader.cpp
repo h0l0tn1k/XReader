@@ -27,6 +27,27 @@ void XReader::begin()
   checkConnectionToPn532();
 
   switchPinOn(_blueLedPin);
+
+
+  _eepromStorage->deleteMemory();
+
+
+
+  uint8_t masterCardId[4] = { 240, 39, 150, 187 };
+  _eepromStorage->setMasterCard(&masterCardId[0], sizeof(masterCardId));
+  _eepromStorage->setPin(123456789);
+
+
+  Serial.print("MasterCard: "); Serial.println(_eepromStorage->getMasterCardId());
+
+  //4,045,903,547
+  //uint8_t newCardId[4] = { 241, 39, 150, 187 };
+  //_eepromStorage->registerNew4BCard(&newCardId[0]);
+
+  //_eepromStorage->getNew4BCardAddress();
+
+  _eepromStorage->printMemory();
+
 }
 
 void XReader::checkConnectionToPn532() const
@@ -38,9 +59,9 @@ void XReader::checkConnectionToPn532() const
 	}
 
 #ifdef DEBUG
-	Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
-	Serial.print("Firmware ver. "); Serial.print((versiondata >> 16) & 0xFF, DEC);
-	Serial.print('.'); Serial.println((versiondata >> 8) & 0xFF, DEC);
+	Serial.print("Found chip PN5"); Serial.println((versionData >> 24) & 0xFF, HEX);
+	Serial.print("Firmware ver. "); Serial.print((versionData >> 16) & 0xFF, DEC);
+	Serial.print('.'); Serial.println((versionData >> 8) & 0xFF, DEC);
 #endif
 
 	initBoard();
@@ -59,7 +80,7 @@ void XReader::loopProcedure()
 	}
 
 	const boolean success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-
+	
 	if (success) 
 	{
 		if (_eepromStorage->isMasterCard(&uid[0], uidLength)) 
@@ -72,8 +93,8 @@ void XReader::loopProcedure()
 		}
 		else 
 		{
-			successfulAuth();
-			//unsuccessfulAuth();
+			_eepromStorage->printMemory();
+			unsuccessfulAuth();
 		}
 	}
 	else
@@ -164,10 +185,10 @@ void XReader::registeringNewCard()
 	
 	Serial.print("Milliseconds: "); Serial.print(millis() - mills); Serial.println("ms.");
 	
-	//_eepromStorage->registerNewCard(&uid[0], uidLength);
 		
 	if(success)
 	{
+		_eepromStorage->registerNewCard(&uid[0], uidLength);
 		delay(300);
 		_soundHelper->switchSuccessAuthBuzzerOn();
 
