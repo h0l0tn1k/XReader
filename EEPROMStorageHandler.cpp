@@ -70,7 +70,7 @@ uint8_t* EEPROMStorageHandler::loadMasterCardId()
 {
 	size_t uid_length = (getMasterCardSizeIndicator()) ? 7 : 4;
 
-	eeprom_read_block(_masterCardId, _masterCardBaseAddress, 7);
+	eeprom_read_block(_masterCardId, _masterCardBaseAddress, uid_length);
 	
 	return _masterCardId;
 }
