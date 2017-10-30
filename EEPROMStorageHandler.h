@@ -46,7 +46,7 @@ private:
 	uint32_t _new4BCardAddress = 0;
 	uint32_t _new7BCardAddress = 0;
 
-	static uint8_t _masterCardId[7];
+	uint8_t _masterCardId[7];
 
 	const unsigned char _masterCardBaseAddress = 1;
 	const unsigned char _masterCardSizeBaseAddress = 8;
@@ -69,7 +69,7 @@ public:
 	//TODO: DELETE AFTERWARDS
 	static void deleteMemory();
 	void setMasterCard(uint8_t* uid, uint8_t uid_length);
-	static void setMasterCardSizeIndicator(bool is7Byte);  // private
+	void setMasterCardSizeIndicator(bool is7Byte);  // private
 	void registerNew7BCard(uint8_t* cardId);
 	void registerNew4BCard(uint8_t* cardId);
 	uint32_t getNew4BCardAddress();

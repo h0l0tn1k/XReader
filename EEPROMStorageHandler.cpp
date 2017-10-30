@@ -1,7 +1,7 @@
 #include "EEPROMStorageHandler.h"
 
 
-#define DEBUG
+//#define DEBUG
 
 EEPROMStorageHandler::EEPROMStorageHandler()
 	:_numberOfRecords(eeprom_read_byte(0))
@@ -372,6 +372,8 @@ Checks whether card \a cardId with cardId length \a uid_length is in card block 
 bool EEPROMStorageHandler::isCardInBlock(const unsigned char block_index, uint8_t* cardId, const uint8_t uid_length) const
 {
 	if (uid_length == 4) {
+		uint32_t cardToFind = convertToInt32(cardId);
+
 		for (unsigned short i = 0; i < 7; ++i)
 		{
 			uint32_t card = eeprom_read_dword(_cardBlockBaseAddress + (block_index * 28) + i * 4);
@@ -421,7 +423,7 @@ void EEPROMStorageHandler::printMemory()
 
 	Serial.print("Number of records: "); Serial.println(eeprom_read_byte(0));
 
-	uint8_t master[8];
+	uint8_t master[7];
 	Serial.print("Master Card:");
 	eeprom_read_block(master, 1, 7);
 	Serial.println(convertToInt32(master));

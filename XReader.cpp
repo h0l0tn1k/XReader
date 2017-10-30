@@ -34,11 +34,11 @@ void XReader::begin()
 
 
   uint8_t masterCardId[7] = { 240, 39, 150, 187, 0, 0, 0 };
-  _eepromStorage->setMasterCard(&masterCardId[0], 4 * sizeof(uint8_t));
+  _eepromStorage->setMasterCard(masterCardId, 4 * sizeof(uint8_t));
   _eepromStorage->setPin(0, 123456789);
 
 
-  Serial.print("MasterCard: "); Serial.println(_eepromStorage->getMasterCardId());
+ // Serial.print("MasterCard: "); Serial.println(_eepromStorage->getMasterCardId());
 
   //4,045,903,547
   //uint8_t newCardId[4] = { 241, 39, 150, 187 };
