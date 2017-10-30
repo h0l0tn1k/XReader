@@ -14,7 +14,7 @@ void XReader::begin()
 #endif
 	Serial.begin(115200);
 	
-  _eepromStorage = new EEPROMStorageHandler(&Serial);
+  _eepromStorage = new EEPROMStorageHandler();
   pinMode(_blueLedPin, OUTPUT);
   pinMode(_greenLedPin, OUTPUT);
   pinMode(_redLedPin, OUTPUT);
@@ -33,9 +33,9 @@ void XReader::begin()
 
 
 
-  uint8_t masterCardId[4] = { 240, 39, 150, 187 };
-  _eepromStorage->setMasterCard(&masterCardId[0], sizeof(masterCardId));
-  _eepromStorage->setPin(123456789);
+  uint8_t masterCardId[7] = { 240, 39, 150, 187, 0, 0, 0 };
+  _eepromStorage->setMasterCard(&masterCardId[0], 4 * sizeof(uint8_t));
+  _eepromStorage->setPin(0, 123456789);
 
 
   Serial.print("MasterCard: "); Serial.println(_eepromStorage->getMasterCardId());
