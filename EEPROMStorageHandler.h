@@ -28,14 +28,7 @@ private:
 	// [29-1023]	28B blocks / 35 of them
 		
 	//TODO: below
-
-
-	//uint32_t getNew4BCardAddress();
-	//void shift4BCardAddress(); - to new empty space
-
-	//uint32_t getNew7BCardAddress();
-	//void shift7BCardAddress(); - to new empty space
-	
+		
 	//bool saveNew4BCard(uint8_t * uid);
 	//bool delete4BCard(uint8_t * uid);
 
@@ -45,17 +38,16 @@ private:
 	unsigned char _numberOfRecords = 0;
 	uint32_t _new4BCardAddress = 0;
 	uint32_t _new7BCardAddress = 0;
-
-	uint8_t _masterCardId[7];
+	uint8_t _masterCardId[7] = { 0, 0, 0, 0, 0, 0, 0 };
 
 	const unsigned char _masterCardBaseAddress = 1;
 	const unsigned char _masterCardSizeBaseAddress = 8;
 	const unsigned char _4B7BBlocksBaseAddress = 9;
-	const uint32_t _4BpointerBaseAddress = 13;
-	const uint32_t _7BpointerBaseAddress = 17;
-	const uint32_t _pinBaseAddress = 21;
-	const uint32_t _blockOccupationBaseAddress = 25;
-	const uint32_t _cardBlockBaseAddress = 29;
+	const unsigned char _4BpointerBaseAddress = 13;
+	const unsigned char _7BpointerBaseAddress = 17;
+	const unsigned char _pinBaseAddress = 21;
+	const unsigned char _blockOccupationBaseAddress = 25;
+	const unsigned char _cardBlockBaseAddress = 29;
 	
 
 public:
@@ -91,7 +83,7 @@ public:
 	bool getMasterCardSizeIndicator();  // private
 	bool isBlockOccupied(unsigned char block_index);
 
-	bool areArraysEqual(uint8_t* array1, uint8_t* array2, uint8_t size);
+	bool areArraysEqual(uint8_t* array1, uint8_t* array2, uint8_t size) const;
 
 	static uint32_m convertToInt32(uint8_t * uid);
 

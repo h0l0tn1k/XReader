@@ -7,8 +7,8 @@ EEPROMStorageHandler::EEPROMStorageHandler()
 	:_numberOfRecords(eeprom_read_byte(0))
 {
 	loadMasterCardId();
-	_new4BCardAddress = eeprom_read_dword(_4BpointerBaseAddress);
-	_new7BCardAddress = eeprom_read_dword(_7BpointerBaseAddress);
+	_new4BCardAddress = eeprom_read_dword((uint32_t*)_4BpointerBaseAddress);
+	_new7BCardAddress = eeprom_read_dword((uint32_t*)_7BpointerBaseAddress);
 }
 
 
@@ -16,7 +16,7 @@ uint32_m EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
 	return (uint32_m(uid[0]) << 24) | (uint32_m(uid[1]) << 16) | (uint32_m(uid[2]) << 8) | uint32_m(uid[3]);
 }
 
-bool EEPROMStorageHandler::areArraysEqual(uint8_t* array1, uint8_t* array2, uint8_t size) {
+bool EEPROMStorageHandler::areArraysEqual(uint8_t* array1, uint8_t* array2, uint8_t size) const {
 	for (unsigned short i = 0; i < size; i++)
 	{
 		if (array1[i] != array2[i]) {
@@ -54,12 +54,12 @@ void EEPROMStorageHandler::deleteMemory()
 bool EEPROMStorageHandler::getMasterCardSizeIndicator() 
 {
 	//true -> 7B, false -> 4B
-	return bool(eeprom_read_byte(_masterCardSizeBaseAddress));
+	return bool(eeprom_read_byte((uint8_t*)_masterCardSizeBaseAddress));
 }
 
 void EEPROMStorageHandler::setMasterCardSizeIndicator(bool is7Byte)
 {
-	eeprom_write_byte(_masterCardSizeBaseAddress, is7Byte);
+	eeprom_write_byte((uint8_t*)_masterCardSizeBaseAddress, is7Byte);
 }
 
 uint8_t* EEPROMStorageHandler::getMasterCardId() {
@@ -70,21 +70,21 @@ uint8_t* EEPROMStorageHandler::loadMasterCardId()
 {
 	size_t uid_length = (getMasterCardSizeIndicator()) ? 7 : 4;
 
-	eeprom_read_block(_masterCardId, _masterCardBaseAddress, uid_length);
+	eeprom_read_block(_masterCardId, (uint32_t*)_masterCardBaseAddress, uid_length);
 	
 	return _masterCardId;
 }
 
 bool EEPROMStorageHandler::isMasterCard(uint8_t* uid, uint8_t uid_length) const
 {
-	return areArraysEqual(uid, _masterCardId, uid_length);
+	return areArraysEqual(uid, (uint8_t*)_masterCardId, uid_length);
 }
 
 void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
 {
 	setMasterCardSizeIndicator(uid_length == 7);
 
-	eeprom_write_block(uid, _masterCardBaseAddress, uid_length);
+	eeprom_write_block(uid, (uint32_t*)_masterCardBaseAddress, uid_length);
 }
 
 #pragma endregion
@@ -103,7 +103,7 @@ void EEPROMStorageHandler::registerNew4BCard(uint8_t* cardId)
 	Serial.print("Card Value to write:"); Serial.println(convertToInt32(&cardId[0]));
 #endif // DEBUG
 
-	eeprom_write_dword(newCardAddress, convertToInt32(cardId));
+	eeprom_write_dword((uint32_t*)newCardAddress, convertToInt32(cardId));
 
 #ifdef DEBUG
 	Serial.print("4B Card check that it was written: "); Serial.println(uint32_t(eeprom_read_dword(newCardAddress)));
@@ -135,7 +135,7 @@ uint32_t EEPROMStorageHandler::getNew4BCardAddress()
 			for (int card_index = 0; card_index < 7; ++card_index)
 			{
 				uint32_t address = _cardBlockBaseAddress + block_index * 28 + card_index * 4;
-				uint32_t card = eeprom_read_dword(address);
+				uint32_t card = eeprom_read_dword((uint32_t*)address);
 #ifdef DEBUG
 				Serial.print("Card value in memory: "); Serial.println(card);
 				Serial.print("Checking card: block_index:"); Serial.print(block_index); Serial.print(" card_index: "); Serial.println(card_index);
@@ -151,7 +151,7 @@ uint32_t EEPROMStorageHandler::getNew4BCardAddress()
 		}
 	}
 
-	eeprom_write_dword(_4BpointerBaseAddress, _new4BCardAddress);
+	eeprom_write_dword((uint32_t*)_4BpointerBaseAddress, _new4BCardAddress);
 	setBlockOccupationType(empty_block_index, true);
 	return _new4BCardAddress;
 }
@@ -268,14 +268,14 @@ void EEPROMStorageHandler::decreaseNumberOfCards() {
 
 
 bool EEPROMStorageHandler::checkPinEquals(const uint32_t pin_entered) {
-	const uint32_t pinInMemory = eeprom_read_dword(_pinBaseAddress);
+	const uint32_t pinInMemory = eeprom_read_dword((uint32_t*)_pinBaseAddress);
 
 	return pinInMemory == pin_entered;
 }
 
 void EEPROMStorageHandler::setPin(const uint32_t pin_entered, uint32_t new_pin) {
 	if (checkPinEquals(pin_entered)) {
-		eeprom_write_dword(_pinBaseAddress, new_pin);
+		eeprom_write_dword((uint32_t*)_pinBaseAddress, new_pin);
 	}
 }
 
@@ -299,7 +299,7 @@ void EEPROMStorageHandler::setBlockOccupationType(unsigned char block_index, boo
 
 	block ^= (-isOccupied ^ block) & bit;
 
-	eeprom_write_byte(_blockOccupationBaseAddress + block_position, block);
+	eeprom_write_byte((uint8_t*)_blockOccupationBaseAddress + block_position, block);
 }
 
 
@@ -322,7 +322,7 @@ unsigned char EEPROMStorageHandler::getBlockOccupationIndicator(const unsigned c
 	}
 
 	const unsigned char block_position = block_index / 8;
-	const unsigned char block = eeprom_read_byte(_blockOccupationBaseAddress + block_position);
+	const unsigned char block = eeprom_read_byte((uint8_t*)_blockOccupationBaseAddress + block_position);
 
 	return block;
 }
@@ -348,7 +348,7 @@ void EEPROMStorageHandler::setCardBlockType(unsigned char block_index, bool is7B
 
 	block ^= (-is7ByteBlock ^ block) & bit;
 
-	eeprom_write_byte(_4B7BBlocksBaseAddress + block_position, block);	
+	eeprom_write_byte((uint8_t*)_4B7BBlocksBaseAddress + block_position, block);
 }
 
 /*
@@ -361,7 +361,7 @@ unsigned char EEPROMStorageHandler::getCardBlockIndicator(const unsigned char bl
 	}
 
 	const unsigned char block_position = block_index / 8;
-	const unsigned char block = eeprom_read_byte(_4B7BBlocksBaseAddress + block_position);
+	const unsigned char block = eeprom_read_byte((uint8_t*)_4B7BBlocksBaseAddress + block_position);
 
 	return block;
 }
@@ -376,7 +376,7 @@ bool EEPROMStorageHandler::isCardInBlock(const unsigned char block_index, uint8_
 
 		for (unsigned short i = 0; i < 7; ++i)
 		{
-			uint32_t card = eeprom_read_dword(_cardBlockBaseAddress + (block_index * 28) + i * 4);
+			uint32_t card = eeprom_read_dword((uint32_t*)_cardBlockBaseAddress + (block_index * 28) + i * 4);
 
 #ifdef DEBUG
 			Serial.print("i:"); Serial.print(i); Serial.print("  card : "); Serial.println(card);
@@ -391,7 +391,7 @@ bool EEPROMStorageHandler::isCardInBlock(const unsigned char block_index, uint8_
 		for (unsigned short i = 0; i < 4; ++i)
 		{
 			uint8_t cardInMemory[7];
-			eeprom_read_block(cardInMemory, _cardBlockBaseAddress + (block_index * 28) + i * 7, 7 * sizeof(uint8_t));
+			eeprom_read_block(cardInMemory, (uint32_t*)_cardBlockBaseAddress + (block_index * 28) + i * 7, 7 * sizeof(uint8_t));
 			if (areArraysEqual(cardInMemory, cardId, uid_length)) {
 				return true;
 			}
