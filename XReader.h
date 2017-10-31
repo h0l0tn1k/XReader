@@ -4,16 +4,13 @@
 #include "SoundHelper.h"
 
 #define PN532_SS   (10)
-#define INVALID_SOUND (261)
-#define VALID_SOUND (3000)
 #define DOOR_OPENED_INTERVAL  5000
-//#define DEBUG
 
 class XReader {
 
   Adafruit_PN532*		_board;
   EEPROMStorageHandler* _eepromStorage;
-  SoundHelper*			_soundHelper;
+  ISoundHelper*			_soundHelper;
 
   const unsigned char	_redLedPin = 9;
   const unsigned char	_blueLedPin = 8;
@@ -58,8 +55,7 @@ private:
 	* \brief Switches off Pin at \param ledPin
 	* \param ledPin Pin to be switched off
 	*/
-	static void switchPinOff(unsigned char ledPin);
-	
+	static void switchPinOff(unsigned char ledPin);	
 
 	/**
 	* \brief Handles unsuccessful RFID Card authorization to XReader by sounding buzzer, switching LED's and by delaying of next attempt
@@ -76,5 +72,8 @@ private:
 	*/
 	void registeringNewCard();
 
+	/**
+	 * \brief Sends HIGH signal to pin \a _openDoorPin which opens the door
+	 */
 	void openDoor() const;
 };
