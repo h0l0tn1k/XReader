@@ -10,6 +10,7 @@ XReader::XReader()
 void XReader::begin()
 {
 #ifndef ESP8266
+	// ReSharper disable once CppPossiblyErroneousEmptyStatements
 	while (!Serial); // for Leonardo/Micro/Zero
 #endif
 	Serial.begin(115200);
@@ -18,7 +19,6 @@ void XReader::begin()
   pinMode(_blueLedPin, OUTPUT);
   pinMode(_greenLedPin, OUTPUT);
   pinMode(_redLedPin, OUTPUT);
-  //responsibility of SoundHelper noow pinMode(_buzzerPin, OUTPUT);
   pinMode(_openDoorPin, OUTPUT);
   pinMode(_button1Pin, INPUT);
   
@@ -29,9 +29,8 @@ void XReader::begin()
   switchPinOn(_blueLedPin);
 
 
+  //Test section starts
   _eepromStorage->deleteMemory();
-
-
 
   uint8_t masterCardId[7] = { 240, 39, 150, 187, 0, 0, 0 };
   _eepromStorage->setMasterCard(masterCardId, 4 * sizeof(uint8_t));
@@ -58,11 +57,6 @@ void XReader::checkConnectionToPn532() const
 		while (true); // halt
 	}
 
-#ifdef DEBUG
-	Serial.print("Found chip PN5"); Serial.println((versionData >> 24) & 0xFF, HEX);
-	Serial.print("Firmware ver. "); Serial.print((versionData >> 16) & 0xFF, DEC);
-	Serial.print('.'); Serial.println((versionData >> 8) & 0xFF, DEC);
-#endif
 
 	initBoard();
 }
@@ -74,8 +68,11 @@ void XReader::loopProcedure()
 
 	if(digitalRead(_button1Pin) == HIGH)
 	{
+		// ReSharper disable once CppPossiblyErroneousEmptyStatements
 		while (digitalRead(_button1Pin) == HIGH);
+#ifdef DEBUG
 		Serial.println("BUTTON 1 PRESSED.");
+#endif
 		//TODO: BUTTON 1 PRESSED
 	}
 
@@ -129,16 +126,15 @@ void XReader::switchPinOff(const unsigned char ledPin) {
 
 void XReader::unsuccessfulAuth()
 {
-	Serial.println("#######THIS IS NOT REGISTERED CARD ######");
+	Serial.println("###### THIS IS NOT REGISTERED CARD ######");
 	_consecutiveFails++;
 
 	switchPinOff(_blueLedPin);
 	switchPinOn(_redLedPin);
 	_soundHelper->soundUnsuccessAuthBuzzerOn();
 
-	const unsigned int logDelay = log(_consecutiveFails) * 1000;
-
 	//incremental delay
+	const unsigned int logDelay = log(_consecutiveFails) * 1000;
 	delay(logDelay);
 
 	switchPinOff(_redLedPin);
@@ -172,23 +168,26 @@ void XReader::registeringNewCard()
 	switchPinOff(_blueLedPin);
 
 	_soundHelper->soundSuccessNoticeSound();
-	delay(1000);
+	delay(500);
 	_soundHelper->waitingForNewCardSound();
 
 
 	_board->setPassiveActivationRetries(0xFF);//wait for new card until it is read.
 
+#ifdef DEBUG
 	const unsigned long mills = millis();
-	const bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength, 10000);
+#endif
 
+	const bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 10000);
 	_soundHelper->stopSound();
 	
+#ifdef DEBUG
 	Serial.print("Milliseconds: "); Serial.print(millis() - mills); Serial.println("ms.");
-	
+#endif
 		
 	if(success)
 	{
-		_eepromStorage->registerNewCard(&uid[0], uidLength);
+		_eepromStorage->registerNewCard(uid, uidLength);
 		delay(300);
 		_soundHelper->switchSuccessAuthBuzzerOn();
 

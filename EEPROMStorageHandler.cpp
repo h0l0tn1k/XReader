@@ -1,6 +1,5 @@
 #include "EEPROMStorageHandler.h"
 
-
 //#define DEBUG
 
 EEPROMStorageHandler::EEPROMStorageHandler()
@@ -11,6 +10,7 @@ EEPROMStorageHandler::EEPROMStorageHandler()
 	_new7BCardAddress = eeprom_read_dword((uint32_t*)_7BpointerBaseAddress);
 }
 
+#pragma region Helpers
 
 uint32_m EEPROMStorageHandler::convertToInt32(uint8_t* uid) {
 	return (uint32_m(uid[0]) << 24) | (uint32_m(uid[1]) << 16) | (uint32_m(uid[2]) << 8) | uint32_m(uid[3]);
@@ -49,6 +49,8 @@ void EEPROMStorageHandler::deleteMemory()
 	eeprom_write_byte(0, 0);
 }
 
+#pragma endregion 
+
 #pragma region Master Card
 
 bool EEPROMStorageHandler::getMasterCardSizeIndicator() 
@@ -68,6 +70,12 @@ uint8_t* EEPROMStorageHandler::getMasterCardId() {
 
 uint8_t* EEPROMStorageHandler::loadMasterCardId()
 {
+	for (int i = 0; i < 7; ++i)
+	{
+		//erase entire masterCardId in case that new 4B masterCardID will rewrite previous 7B card
+		_masterCardId[i] = 0;
+	}
+
 	size_t uid_length = (getMasterCardSizeIndicator()) ? 7 : 4;
 
 	eeprom_read_block(_masterCardId, (uint32_t*)_masterCardBaseAddress, uid_length);
@@ -85,12 +93,26 @@ void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
 	setMasterCardSizeIndicator(uid_length == 7);
 
 	eeprom_write_block(uid, (uint32_t*)_masterCardBaseAddress, uid_length);
+
+	loadMasterCardId();
 }
 
 #pragma endregion
 
+#pragma region 4B/7B Card Pointers
+
 void EEPROMStorageHandler::registerNew7BCard(uint8_t* cardId)
 {
+	uint32_t newCardAddress = getNew7BCardAddress();
+
+#ifdef DEBUG
+	Serial.println("registerNew7BCard");
+	Serial.print("Card Addres to write:"); Serial.println(newCardAddress);
+	//Serial.print("Card Value to write:"); Serial.println(convertToInt32(&cardId[0]));
+#endif // DEBUG
+
+	eeprom_write_block(cardId, (uint32_t*)newCardAddress, 7);
+	increaseNumberOfCards();
 }
 
 void EEPROMStorageHandler::registerNew4BCard(uint8_t* cardId)
@@ -158,7 +180,12 @@ uint32_t EEPROMStorageHandler::getNew4BCardAddress()
 
 uint32_t EEPROMStorageHandler::getNew7BCardAddress()
 {
+	return 0;
 }
+
+#pragma endregion
+
+#pragma region Card Registration / Comparing
 
 void EEPROMStorageHandler::registerNewCard(uint8_t* cardId, const uint8_t uid_length) {
 	bool isAlreadyRegistered = this->isCardRegistered(cardId, uid_length);
@@ -222,6 +249,8 @@ bool EEPROMStorageHandler::isCardRegistered(uint8_t* cardId, const uint8_t uid_l
 	return false;
 }
 
+#pragma endregion
+
 #pragma region Number of Cards
 
 
@@ -263,7 +292,6 @@ void EEPROMStorageHandler::decreaseNumberOfCards() {
 
 #pragma endregion
 
-
 #pragma region Pin
 
 
@@ -281,7 +309,7 @@ void EEPROMStorageHandler::setPin(const uint32_t pin_entered, uint32_t new_pin) 
 
 #pragma endregion
 
-#pragma region OccupationIndicators
+#pragma region Occupation Indicators
 /*
 Sets boolean value (isOccupied) to bit at block_index position (0-31), if block_index is out of range it terminates
 */
@@ -329,8 +357,7 @@ unsigned char EEPROMStorageHandler::getBlockOccupationIndicator(const unsigned c
 
 #pragma endregion 
 
-#pragma region BlockIndicators
-
+#pragma region Block Indicators
 
 /*
 	Sets boolean value (is7ByteBlock) to bit at block_index position (0-31), if block_index is out of range it terminates

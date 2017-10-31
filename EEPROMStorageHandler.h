@@ -7,8 +7,6 @@ typedef unsigned long int uint32_m;
 
 class EEPROMStorageHandler {
 
-private:
-
 	//MEMORY
 	//	  0		|	1		2		3		4		5		6		7	|	 8	  |		9		10		11		12	|
 	//#numOfRec#|#########MASTERCARD####################################|#########|#################################|
@@ -26,15 +24,7 @@ private:
 	// [25-28]		Block occupation
 
 	// [29-1023]	28B blocks / 35 of them
-		
-	//TODO: below
-		
-	//bool saveNew4BCard(uint8_t * uid);
-	//bool delete4BCard(uint8_t * uid);
-
-	//bool saveNew7BCard(uint8_t * uid);
-	//bool delete7BCard(uint8_t * uid);
-
+	
 	unsigned char _numberOfRecords = 0;
 	uint32_t _new4BCardAddress = 0;
 	uint32_t _new7BCardAddress = 0;
@@ -48,53 +38,58 @@ private:
 	const unsigned char _pinBaseAddress = 21;
 	const unsigned char _blockOccupationBaseAddress = 25;
 	const unsigned char _cardBlockBaseAddress = 29;
-	
 
 public:
 	EEPROMStorageHandler();
-	bool isMasterCard(uint8_t* uid, uint8_t uid_length) const;
-	void registerNewCard(uint8_t * cardId, uint8_t uid_length);
-	bool isCardRegistered(uint8_t * cardId, uint8_t uid_length);
-	void setCardBlockType(unsigned char block_index, bool is7ByteBlock);
-	bool isCardBlock7B(unsigned char block_index);
 	
 	//TODO: DELETE AFTERWARDS
-	static void deleteMemory();
-	void setMasterCard(uint8_t* uid, uint8_t uid_length);
-	void setMasterCardSizeIndicator(bool is7Byte);  // private
-	void registerNew7BCard(uint8_t* cardId);
-	void registerNew4BCard(uint8_t* cardId);
-	uint32_t getNew4BCardAddress();
-	uint32_t getNew7BCardAddress();
-	void printMemory();
+	uint32_t getNew4BCardAddress(); // private
+	uint32_t getNew7BCardAddress(); // private
 
-	bool isNthBitTrue(unsigned char, unsigned char) const;
 //private:
 
 	//Number of stored cards
-	void setNumberOfCards(unsigned char count);
-	unsigned char getNumberOfCards();
-	void increaseNumberOfCards();
-	void decreaseNumberOfCards();
+	void setNumberOfCards(unsigned char count);  // private
+	unsigned char getNumberOfCards(); // public
+	void increaseNumberOfCards(); // private
+	void decreaseNumberOfCards(); // private
 
 	//Master Card
-	uint8_t* loadMasterCardId();
-	uint8_t* getMasterCardId();
+	void setMasterCard(uint8_t* uid, uint8_t uid_length); // PUBLIC with equals check
+	uint8_t* loadMasterCardId(); // private
+	uint8_t* getMasterCardId(); // private
+	bool isMasterCard(uint8_t* uid, uint8_t uid_length) const; // public
+	void setMasterCardSizeIndicator(bool is7Byte);  // private
 	bool getMasterCardSizeIndicator();  // private
-	bool isBlockOccupied(unsigned char block_index);
 
-	bool areArraysEqual(uint8_t* array1, uint8_t* array2, uint8_t size) const;
+	//Registered Cards
+	void registerNewCard(uint8_t * cardId, uint8_t uid_length); //public
+	bool isCardRegistered(uint8_t * cardId, uint8_t uid_length); //public
+	void registerNew7BCard(uint8_t* cardId); //private
+	void registerNew4BCard(uint8_t* cardId); //private
+	//bool delete4BCard(uint8_t * uid);
+	//bool delete7BCard(uint8_t * uid);
 
-	static uint32_m convertToInt32(uint8_t * uid);
 
+	//Occupation Block 
+	bool isBlockOccupied(unsigned char block_index); // private
+	void setBlockOccupationType(unsigned char block_index, bool isOccupied); //private
+	unsigned char getBlockOccupationIndicator(unsigned char block_index); // private
 
-	bool checkPinEquals(uint32_t pin_entered);
-	void setPin(const uint32_t pin_entered, uint32_t new_pin);
+	//	GENERAL/helpers
+	bool isNthBitTrue(unsigned char, unsigned char) const; //private
+	bool areArraysEqual(uint8_t* array1, uint8_t* array2, uint8_t size) const; //private
+	static uint32_m convertToInt32(uint8_t * uid); //private
+	void printMemory(); 
+	static void deleteMemory();
 
-
-	void setBlockOccupationType(unsigned char block_index, bool isOccupied);
-	unsigned char getBlockOccupationIndicator(unsigned char block_index);
+	//PIN
+	bool checkPinEquals(uint32_t pin_entered); // public
+	void setPin(const uint32_t pin_entered, uint32_t new_pin); //public
+	
 	//4B/7B Block indicators
-	unsigned char getCardBlockIndicator(unsigned char block_index);
-	bool isCardInBlock(const unsigned char block_index, uint8_t* cardId, const uint8_t uid_length) const;
+	void setCardBlockType(unsigned char block_index, bool is7ByteBlock); // private
+	bool isCardBlock7B(unsigned char block_index); // private
+	unsigned char getCardBlockIndicator(unsigned char block_index); // private
+	bool isCardInBlock(const unsigned char block_index, uint8_t* cardId, const uint8_t uid_length) const; // private
 };
