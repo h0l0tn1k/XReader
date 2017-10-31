@@ -80,17 +80,16 @@ void XReader::loopProcedure()
 	
 	if (success) 
 	{
-		if (_eepromStorage->isMasterCard(&uid[0], uidLength)) 
+		if (_eepromStorage->isMasterCard(uid, uidLength)) 
 		{
 			registeringNewCard();
 		}
-		else if (_eepromStorage->isCardRegistered(&uid[0], uidLength)) 
+		else if (_eepromStorage->isCardRegistered(uid, uidLength)) 
 		{
 			successfulAuth();
 		}
 		else 
 		{
-			_eepromStorage->printMemory();
 			unsuccessfulAuth();
 		}
 	}

@@ -7,7 +7,7 @@ typedef unsigned long int uint32_m;
 
 class EEPROMStorageHandler {
 
-	//MEMORY
+	//MEMORY;
 	//	  0		|	1		2		3		4		5		6		7	|	 8	  |		9		10		11		12	|
 	//#numOfRec#|#########MASTERCARD####################################|#########|#################################|
 
@@ -45,8 +45,9 @@ public:
 	//TODO: DELETE AFTERWARDS
 	uint32_t getNew4BCardAddress(); // private
 	uint32_t getNew7BCardAddress(); // private
+	bool canMarkAs7Bblock(unsigned char block_index);
 
-//private:
+	//private:
 
 	//Number of stored cards
 	void setNumberOfCards(unsigned char count);  // private
@@ -92,4 +93,5 @@ public:
 	bool isCardBlock7B(unsigned char block_index); // private
 	unsigned char getCardBlockIndicator(unsigned char block_index); // private
 	bool isCardInBlock(const unsigned char block_index, uint8_t* cardId, const uint8_t uid_length) const; // private
+	void printCard(uint8_t* card, uint8_t uid_length) const;
 };
