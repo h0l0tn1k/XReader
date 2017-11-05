@@ -24,31 +24,31 @@
     <ClInclude Include="Api\EEPROMStorageHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Api\ILedHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Api\IPinHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Api\ISoundHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Api\LedHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Api\PinHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Api\RfidCard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Api\SoundHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Api\UidSize.h">
+    <ClInclude Include="Api\XReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Api\XReader.h">
+    <ClInclude Include="Api\Enums\UidSize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Api\Interfaces\ILedHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Api\Interfaces\IPinHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Api\Interfaces\ISoundHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Api\Structs\RfidCard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

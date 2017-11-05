@@ -85,14 +85,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Api\EEPROMStorageHandler.h" />
-    <ClInclude Include="Api\ILedHelper.h" />
-    <ClInclude Include="Api\IPinHelper.h" />
-    <ClInclude Include="Api\ISoundHelper.h" />
+    <ClInclude Include="Api\Enums\UidSize.h" />
+    <ClInclude Include="Api\Interfaces\ILedHelper.h" />
+    <ClInclude Include="Api\Interfaces\IPinHelper.h" />
+    <ClInclude Include="Api\Interfaces\ISoundHelper.h" />
     <ClInclude Include="Api\LedHelper.h" />
     <ClInclude Include="Api\PinHelper.h" />
-    <ClInclude Include="Api\RfidCard.h" />
     <ClInclude Include="Api\SoundHelper.h" />
-    <ClInclude Include="Api\UidSize.h" />
+    <ClInclude Include="Api\Structs\RfidCard.h" />
     <ClInclude Include="Api\XReader.h" />
     <ClInclude Include="__vm\.XReader.vsarduino.h" />
   </ItemGroup>
