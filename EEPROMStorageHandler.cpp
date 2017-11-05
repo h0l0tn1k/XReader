@@ -28,11 +28,6 @@ bool EEPROMStorageHandler::areArraysEqual(uint8_t* array1, uint8_t* array2, uint
 
 bool EEPROMStorageHandler::isNthBitTrue(unsigned char byte, unsigned char bit_index) const
 {
-	/*
-	Bullshit because we can have e.g occupation block 11111111
-	if (byte == 255) {
-		return false;
-	}*/
 	const unsigned char bit_position = bit_index % 8;
 	const unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
 	
@@ -83,16 +78,16 @@ uint8_t* EEPROMStorageHandler::loadMasterCardId()
 	return _masterCardId;
 }
 
-bool EEPROMStorageHandler::isMasterCard(uint8_t* uid, uint8_t uid_length) const
+bool EEPROMStorageHandler::isMasterCard(RfidCard card) const
 {
-	return areArraysEqual(uid, (uint8_t*)_masterCardId, uid_length);
+	return areArraysEqual(card.cardUid, (uint8_t*)_masterCardId, card.length);
 }
 
-void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
+void EEPROMStorageHandler::setMasterCard(RfidCard card)
 {
-	setMasterCardSizeIndicator(uid_length == 7);
+	setMasterCardSizeIndicator(card.length == 7);
 
-	eeprom_write_block(uid, (uint32_t*)_masterCardBaseAddress, uid_length);
+	eeprom_write_block(card.cardUid, (uint32_t*)_masterCardBaseAddress, card.length);
 
 	loadMasterCardId();
 }
@@ -101,7 +96,7 @@ void EEPROMStorageHandler::setMasterCard(uint8_t* uid, uint8_t uid_length)
 
 #pragma region 4B/7B Card Pointers
 
-void EEPROMStorageHandler::registerNew7BCard(uint8_t* cardId)
+void EEPROMStorageHandler::registerNew7BCard(RfidCard card)
 {
 	uint32_t newCardAddress = getNew7BCardAddress();
 
@@ -111,7 +106,7 @@ void EEPROMStorageHandler::registerNew7BCard(uint8_t* cardId)
 	printCard(cardId, 7);
 #endif // DEBUG
 
-	eeprom_write_block(cardId, (uint32_t*)newCardAddress, 7);
+	eeprom_write_block(card.cardUid, (uint32_t*)newCardAddress, 7);
 
 #ifdef DEBUG
 	eeprom_read_block(cardId, (uint32_t*)newCardAddress, 7);
@@ -121,7 +116,7 @@ void EEPROMStorageHandler::registerNew7BCard(uint8_t* cardId)
 	increaseNumberOfCards();
 }
 
-void EEPROMStorageHandler::registerNew4BCard(uint8_t* cardId)
+void EEPROMStorageHandler::registerNew4BCard(RfidCard card)
 {
 	uint32_t newCardAddress = getNew4BCardAddress();
 
@@ -131,7 +126,7 @@ void EEPROMStorageHandler::registerNew4BCard(uint8_t* cardId)
 	Serial.print("Card Value to write:"); Serial.println(convertToInt32(&cardId[0]));
 #endif // DEBUG
 
-	eeprom_write_dword((uint32_t*)newCardAddress, convertToInt32(cardId));
+	eeprom_write_dword((uint32_t*)newCardAddress, convertToInt32(card.cardUid));
 
 #ifdef DEBUG
 	Serial.print("4B Card check that it was written: "); Serial.println(uint32_t(eeprom_read_dword(newCardAddress)));
@@ -222,16 +217,20 @@ uint32_t EEPROMStorageHandler::getNew7BCardAddress()
 			for (int card_index = 0; card_index < 4; ++card_index)
 			{
 				uint32_t address = _cardBlockBaseAddress + block_index * 28 + card_index * 7;
-				uint8_t card[7], emptyCard[7] = { 0, 0, 0, 0, 0, 0, 0 };
-				eeprom_read_block(card, (uint32_t*)address, 7);
+				uint8_t emptyCard[7] = { 0, 0, 0, 0, 0, 0, 0 };
+				RfidCard card;
+				card.length = Is7Bytes;
+				eeprom_read_block(card.cardUid, (uint32_t*)address, 7);
 #ifdef DEBUG
 				Serial.print("Checking card: block_index:"); Serial.print(block_index); Serial.print(" card_index: "); Serial.println(card_index);
 #endif // DEBUG			
-				printCard(card, 7);
+				printCard(card);
 
-				if (areArraysEqual(card, emptyCard, 7))
+				if (areArraysEqual(card.cardUid, emptyCard, 7))
 				{
+#ifdef DEBUG
 					Serial.print("Next 7B card address: "); Serial.println(address);
+#endif // DEBUG	
 					_new7BCardAddress = address;
 					setBlockOccupationType(block_index, true);
 					setCardBlockType(block_index, true);
@@ -248,7 +247,9 @@ bool EEPROMStorageHandler::canMarkAs7Bblock(unsigned char block_index)
 	bool occupied = isBlockOccupied(block_index);
 	bool is7BBlock = isCardBlock7B(block_index);
 
+#ifdef DEBUG
 	Serial.print("canMarkAs7Bblock occupied: "); Serial.print(occupied); Serial.print(" is7BBlock :"); Serial.println(is7BBlock);
+#endif //DEBUG
 
 	if(occupied)
 	{
@@ -262,22 +263,22 @@ bool EEPROMStorageHandler::canMarkAs7Bblock(unsigned char block_index)
 
 #pragma region Card Registration / Comparing
 
-void EEPROMStorageHandler::registerNewCard(uint8_t* cardId, const uint8_t uid_length) {
-	bool isAlreadyRegistered = this->isCardRegistered(cardId, uid_length);
-	bool isMasterCard = this->isMasterCard(cardId, uid_length);
+void EEPROMStorageHandler::registerNewCard(RfidCard card) {
+	bool isAlreadyRegistered = this->isCardRegistered(card);
+	bool isMasterCard = this->isMasterCard(card);
 
 	if (!isAlreadyRegistered && !isMasterCard) {
 #ifdef DEBUG
 		Serial.println("Card is not registered. Starting registration process");
 #endif //DEBUG
 		
-		if(uid_length == 7)
+		if(card.length == Is7Bytes)
 		{
-			registerNew7BCard(cardId);
+			registerNew7BCard(card);
 		}
-		else if (uid_length == 4)
+		else if (card.length == Is4Bytes)
 		{
-			registerNew4BCard(cardId);
+			registerNew4BCard(card);
 		} 
 
 #ifdef DEBUG
@@ -302,32 +303,36 @@ void EEPROMStorageHandler::registerNewCard(uint8_t* cardId, const uint8_t uid_le
 	}
 }
 
-bool EEPROMStorageHandler::isCardRegistered(uint8_t* cardId, const uint8_t uid_length) {
+bool EEPROMStorageHandler::isCardRegistered(RfidCard card) {
 	printMemory();
 	
-	const bool cardLength7B = uid_length == 7;
-	//Serial.println("isCardRegistered");
-	//Serial.print("Card length 7B:"); Serial.println(cardLength7B);
+	const bool cardLength7B = card.length == Is7Bytes;
 	
 	for (unsigned short block_index = 0; block_index <= 31; block_index++) {
-		//XNOR - it is 7B index and card length is 7 B
-		// or is 4B block and car dlength is 4B
+#ifdef DEBUG
 		Serial.print("Block Index: "); Serial.println(block_index);
 		Serial.print("Block Occupied: "); Serial.println(isBlockOccupied(block_index));
 		Serial.print("ZZZZZ: "); Serial.println((!(isCardBlock7B(block_index) ^ cardLength7B)));
+#endif // DEBUG
 
-
+		//XNOR - it is 7B index and card length is 7 B
+		// or is 4B block and car dlength is 4B
 		if((!(isCardBlock7B(block_index) ^ cardLength7B)) && isBlockOccupied(block_index))
 		{
+#ifdef DEBUG
 			Serial.print("Block Index: "); Serial.print(block_index); Serial.print("  present: ");
-
-			if (isCardInBlock(block_index, cardId, uid_length))
+#endif // DEBUG
+			if (isCardInBlock(block_index, card))
 			{
+#ifdef DEBUG
 				Serial.println("YES  CARD IS REGISTERED!!!");
+#endif // DEBUG
 				return true;
 			}
 
+#ifdef DEBUG
 			Serial.println("NO.");
+#endif
 		}
 
 	}
@@ -348,7 +353,7 @@ void EEPROMStorageHandler::setNumberOfCards(unsigned char newNumber) {
 	Serial.print("setNumberOfCards newNumber: ");  Serial.println(newNumber);
 #endif // DEBUG
 
-	eeprom_write_byte(0, newNumber);
+	eeprom_write_byte(_numOfCardsBaseAddress, newNumber);
 	_numberOfRecords = newNumber;
 }
 
@@ -407,11 +412,11 @@ void EEPROMStorageHandler::setBlockOccupationType(unsigned char block_index, boo
 		return;
 	}
 
-	unsigned char block_position = block_index / 8;
-	unsigned char bit_position = block_index % 8;
+	const unsigned char block_position = block_index / 8;
+	const unsigned char bit_position = block_index % 8;
 	unsigned char block = getBlockOccupationIndicator(block_index);
 
-	unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
+	const unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
 
 	block ^= (-isOccupied ^ block) & bit;
 
@@ -455,11 +460,11 @@ void EEPROMStorageHandler::setCardBlockType(unsigned char block_index, bool is7B
 	if (block_index > 31) {
 		return;
 	}
-	unsigned char block_position = block_index / 8;
-	unsigned char bit_position = block_index % 8;
+	const unsigned char block_position = block_index / 8;
+	const unsigned char bit_position = block_index % 8;
 	unsigned char block = getCardBlockIndicator(block_index);
 
-	unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
+	const unsigned char bit = (bit_position > 0) ? (1 << bit_position) : 1;
 
 	block ^= (-is7ByteBlock ^ block) & bit;
 
@@ -484,32 +489,36 @@ unsigned char EEPROMStorageHandler::getCardBlockIndicator(const unsigned char bl
 /*
 Checks whether card \a cardId with cardId length \a uid_length is in card block determined by \a block_index
 */
-bool EEPROMStorageHandler::isCardInBlock(const unsigned char block_index, uint8_t* cardId, const uint8_t uid_length) const
+bool EEPROMStorageHandler::isCardInBlock(const unsigned char block_index, RfidCard card) const
 {
+#ifdef DEBUG
 	Serial.println("##################### isCardInBlock");
-	if (uid_length == 4) {
-		uint32_t cardToFind = convertToInt32(cardId);
+#endif //DEBUG
+
+	if (card.length == Is4Bytes) {
+		uint32_t cardToFind = convertToInt32(card.cardUid);
 		Serial.print("Card: "); Serial.println(cardToFind);
 
 		for (unsigned short i = 0; i < 7; ++i)
 		{
 			uint32_t card = eeprom_read_dword((uint32_t*)(_cardBlockBaseAddress + (block_index * 28) + i * 4));
-//#ifdef DEBUG
+#ifdef DEBUG
 			Serial.print("i:"); Serial.print(i); Serial.print("  card : "); Serial.println(card);
-//#endif //DEBUG
+#endif //DEBUG
 			if (card == cardToFind && card != 0)
 			{
 				return true;
 			}
 		}
 	}
-	else if (uid_length == 7) {
+	else if (card.length == Is7Bytes) {
 		for (unsigned short i = 0; i < 4; ++i)
 		{
-			uint8_t cardInMemory[7] = { 0, 0, 0, 0, 0, 0, 0 };
-			eeprom_read_block(cardInMemory, (uint32_t*)(_cardBlockBaseAddress + (block_index * 28) + i * 7), 7 * sizeof(uint8_t));
-			printCard(cardInMemory, 7);
-			if (areArraysEqual(cardInMemory, cardId, uid_length)) {
+			RfidCard cardInMemory;
+			cardInMemory.length = Is7Bytes;
+			eeprom_read_block(cardInMemory.cardUid, (uint32_t*)(_cardBlockBaseAddress + (block_index * 28) + i * 7), 7 * sizeof(uint8_t));
+			printCard(cardInMemory);
+			if (areArraysEqual(cardInMemory.cardUid, card.cardUid, card.length)) {
 				return true;
 			}
 		}
@@ -518,12 +527,12 @@ bool EEPROMStorageHandler::isCardInBlock(const unsigned char block_index, uint8_
 	return false;
 }
 
-void EEPROMStorageHandler::printCard(uint8_t* card, uint8_t uid_length) const
+void EEPROMStorageHandler::printCard(RfidCard card) const
 {
 	Serial.println("printCard:");
-	for (int i = 0; i < uid_length; ++i)
+	for (int i = 0; i < card.length; ++i)
 	{
-		Serial.print(card[i], DEC); Serial.print(" ");
+		Serial.print(card.cardUid[i], DEC); Serial.print(" ");
 	}
 	Serial.println("");
 }
@@ -533,10 +542,12 @@ void EEPROMStorageHandler::printCard(uint8_t* card, uint8_t uid_length) const
 */
 bool EEPROMStorageHandler::isCardBlock7B(unsigned char block_index) {
 
+#ifdef DEBUG
 	Serial.println("isCardBlock7B");
 	Serial.print("Card Block Indicator: "); Serial.println(getCardBlockIndicator(block_index));
 	Serial.print("Block Index: "); Serial.println(block_index);
 	Serial.print("Result: "); Serial.println(isNthBitTrue(getCardBlockIndicator(block_index), block_index));
+#endif //DEBUG
 
 	return isNthBitTrue(getCardBlockIndicator(block_index), block_index);
 }
@@ -548,12 +559,12 @@ Prints memory
 */
 void EEPROMStorageHandler::printMemory()
 {
+
+#ifdef DEBUG
 	Serial.println("Cards in MEM");
 	Serial.println(eeprom_read_dword(_cardBlockBaseAddress));
 	Serial.println(eeprom_read_dword(_cardBlockBaseAddress + 4));
 	Serial.println(eeprom_read_dword(_cardBlockBaseAddress + 8));
-
-#ifdef DEBUG
 
 	Serial.println("============================MEMORY");
 

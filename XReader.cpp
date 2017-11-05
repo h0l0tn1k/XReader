@@ -1,10 +1,20 @@
 #include "XReader.h"
+#include "RfidCard.h"
 
 XReader::XReader() 
 {
-	_board = new Adafruit_PN532(PN532_SS);
-	_eepromStorage = nullptr;
+	_eepromStorage = new EEPROMStorageHandler();
+
+	const uint8_t _pn532SS_Pin = 10;
+	_board = new Adafruit_PN532(_pn532SS_Pin);
+
+	const uint8_t	_buzzerPin = 2;
 	_soundHelper = new SoundHelper(_buzzerPin);
+
+	const uint8_t	_redLedPin = 9;
+	const uint8_t	_blueLedPin = 8;
+	const uint8_t	_greenLedPin = 7;
+	_ledHelper = new LedHelper(_blueLedPin, _greenLedPin, _redLedPin);
 }
 
 void XReader::begin()
@@ -15,10 +25,6 @@ void XReader::begin()
 #endif
 	Serial.begin(115200);
 	
-  _eepromStorage = new EEPROMStorageHandler();
-  pinMode(_blueLedPin, OUTPUT);
-  pinMode(_greenLedPin, OUTPUT);
-  pinMode(_redLedPin, OUTPUT);
   pinMode(_openDoorPin, OUTPUT);
   pinMode(_button1Pin, INPUT);
   
@@ -26,16 +32,17 @@ void XReader::begin()
 
   checkConnectionToPn532();
 
-  switchPinOn(_blueLedPin);
+  _ledHelper->switchPowerLedOn();
 
 
   //Test section starts
-  _eepromStorage->deleteMemory();
+  //_eepromStorage->deleteMemory();
 
+  /*
   uint8_t masterCardId[7] = { 240, 39, 150, 187, 0, 0, 0 };
   _eepromStorage->setMasterCard(masterCardId, 4 * sizeof(uint8_t));
   _eepromStorage->setPin(0, 123456789);
-
+  */
 
  // Serial.print("MasterCard: "); Serial.println(_eepromStorage->getMasterCardId());
 
@@ -54,16 +61,16 @@ void XReader::checkConnectionToPn532() const
 	const uint32_t versionData = _board->getFirmwareVersion();
 	if (!versionData) {
 		Serial.print("Didn't find PN53x board");
+		_ledHelper->switchFailLedOn();
 		while (true); // halt
 	}
-
-
+	
 	initBoard();
 }
 
 void XReader::loopProcedure()
 {
-	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
+	RfidCard card;
 	uint8_t uidLength;
 
 	if(digitalRead(_button1Pin) == HIGH)
@@ -76,15 +83,17 @@ void XReader::loopProcedure()
 		//TODO: BUTTON 1 PRESSED
 	}
 
-	const boolean success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
+	const boolean success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, card.cardUid, &uidLength);
+
+	card.length = UidSize(uidLength);	
 	
 	if (success) 
 	{
-		if (_eepromStorage->isMasterCard(uid, uidLength)) 
+		if (_eepromStorage->isMasterCard(card)) 
 		{
 			registeringNewCard();
 		}
-		else if (_eepromStorage->isCardRegistered(uid, uidLength)) 
+		else if (_eepromStorage->isCardRegistered(card)) 
 		{
 			successfulAuth();
 		}
@@ -110,34 +119,22 @@ void XReader::initBoard() const
 	// configure board to read RFID tags
 	_board->SAMConfig();
 
-	Serial.println("Waiting for an ISO14443A card");
-
+	Serial.println("Running...");
 }
-
-void XReader::switchPinOn(const unsigned char ledPin) {
-	digitalWrite(ledPin, HIGH);
-}
-
-void XReader::switchPinOff(const unsigned char ledPin) {
-	digitalWrite(ledPin, LOW);
-}
-
 
 void XReader::unsuccessfulAuth()
 {
 	Serial.println("###### THIS IS NOT REGISTERED CARD ######");
 	_consecutiveFails++;
 
-	switchPinOff(_blueLedPin);
-	switchPinOn(_redLedPin);
+	_ledHelper->switchFailAuthIndicationOn();
 	_soundHelper->soundUnsuccessAuthBuzzerOn();
 
 	//incremental delay
 	const unsigned int logDelay = log(_consecutiveFails) * 1000;
 	delay(logDelay);
 
-	switchPinOff(_redLedPin);
-	switchPinOn(_blueLedPin);
+	_ledHelper->switchFailAuthIndicationOff();
 }
 
 void XReader::successfulAuth()
@@ -145,31 +142,26 @@ void XReader::successfulAuth()
 	Serial.println("=======THIS IS REGISTERED CARD======");
 	_consecutiveFails = 0;
 
-	switchPinOff(_blueLedPin);
-	switchPinOn(_greenLedPin);
-	//_soundHelper->switchSuccessAuthBuzzerOn();
+	_ledHelper->switchSuccessAuthIndicationOn();
 
 	openDoor();
 
-	switchPinOff(_greenLedPin);
-	switchPinOn(_blueLedPin);
+	_ledHelper->switchSuccessAuthIndicationOff();
 }
 
 void XReader::registeringNewCard()
 {
-	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
+	RfidCard card;
 	uint8_t uidLength;
 	Serial.println("=======THIS IS MASTERCARD======");
 	_consecutiveFails = 0;
 
-	Serial.println("Waiting for new card to register...");
-	switchPinOn(_greenLedPin);
-	switchPinOff(_blueLedPin);
+	Serial.println("Waiting for a new card to register...");
+	_ledHelper->switchSuccessAuthIndicationOn();
 
 	_soundHelper->soundSuccessNoticeSound();
 	delay(500);
 	_soundHelper->waitingForNewCardSound();
-
 
 	_board->setPassiveActivationRetries(0xFF);//wait for new card until it is read.
 
@@ -177,7 +169,8 @@ void XReader::registeringNewCard()
 	const unsigned long mills = millis();
 #endif
 
-	const bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 10000);
+	const bool success = _board->readPassiveTargetID(PN532_MIFARE_ISO14443A, card.cardUid, &uidLength, 10000);
+	card.length = UidSize(uidLength);
 	_soundHelper->stopSound();
 	
 #ifdef DEBUG
@@ -186,29 +179,21 @@ void XReader::registeringNewCard()
 		
 	if(success)
 	{
-		_eepromStorage->registerNewCard(uid, uidLength);
+		_eepromStorage->registerNewCard(card);
 		delay(300);
 		_soundHelper->switchSuccessAuthBuzzerOn();
-
-		for (size_t i = 0; i < 10; i++)
-		{
-			delay(50);
-			switchPinOn(_greenLedPin);
-			delay(50);
-			switchPinOff(_greenLedPin);
-		}
+		_ledHelper->switchSuccessRegistrationIndicationOn();
 	} 
 	else
 	{
-		switchPinOff(_greenLedPin);
-		switchPinOn(_redLedPin);
+		_ledHelper->switchFailedRegistrationIndicationOn();
 		_soundHelper->soundUnsuccessAuthBuzzerOn();
 		delay(500);
-		switchPinOff(_redLedPin);
+		_ledHelper->switchFailLedOff();
 	}
 
 	delay(1000);
-	switchPinOn(_blueLedPin);
+	_ledHelper->switchPowerLedOn();
 	_board->setPassiveActivationRetries(0x01);
 }
 
@@ -216,5 +201,5 @@ void XReader::openDoor() const
 {
 	switchPinOn(_openDoorPin);
 	delay(DOOR_OPENED_INTERVAL);
-	switchPinOff(_openDoorPin);	
+	switchPinOff(_openDoorPin);
 }

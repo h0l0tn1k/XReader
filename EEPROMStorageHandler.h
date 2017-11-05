@@ -1,6 +1,7 @@
 #pragma once
 #include <EEPROM.h>
 #include "HardwareSerial.h"
+#include "RfidCard.h"
 
 typedef unsigned long int uint32_m;
 
@@ -22,22 +23,22 @@ class EEPROMStorageHandler {
 	// [17-20]		Pnew7 - 4B pointer to place in memory where new 7B uid will be stored
 	// [21-24]		PIN
 	// [25-28]		Block occupation
-
 	// [29-1023]	28B blocks / 35 of them
 	
-	unsigned char _numberOfRecords = 0;
 	uint32_t _new4BCardAddress = 0;
 	uint32_t _new7BCardAddress = 0;
+	uint8_t _numberOfRecords = 0;
 	uint8_t _masterCardId[7] = { 0, 0, 0, 0, 0, 0, 0 };
 
-	const unsigned char _masterCardBaseAddress = 1;
-	const unsigned char _masterCardSizeBaseAddress = 8;
-	const unsigned char _4B7BBlocksBaseAddress = 9;
-	const unsigned char _4BpointerBaseAddress = 13;
-	const unsigned char _7BpointerBaseAddress = 17;
-	const unsigned char _pinBaseAddress = 21;
-	const unsigned char _blockOccupationBaseAddress = 25;
-	const unsigned char _cardBlockBaseAddress = 29;
+	const uint8_t _numOfCardsBaseAddress = 0;
+	const uint8_t _masterCardBaseAddress = 1;
+	const uint8_t _masterCardSizeBaseAddress = 8;
+	const uint8_t _4B7BBlocksBaseAddress = 9;
+	const uint8_t _4BpointerBaseAddress = 13;
+	const uint8_t _7BpointerBaseAddress = 17;
+	const uint8_t _pinBaseAddress = 21;
+	const uint8_t _blockOccupationBaseAddress = 25;
+	const uint8_t _cardBlockBaseAddress = 29;
 
 public:
 	EEPROMStorageHandler();
@@ -56,18 +57,18 @@ public:
 	void decreaseNumberOfCards(); // private
 
 	//Master Card
-	void setMasterCard(uint8_t* uid, uint8_t uid_length); // PUBLIC with equals check
+	void setMasterCard(RfidCard card); // PUBLIC with equals check
 	uint8_t* loadMasterCardId(); // private
 	uint8_t* getMasterCardId(); // private
-	bool isMasterCard(uint8_t* uid, uint8_t uid_length) const; // public
+	bool isMasterCard(RfidCard card) const; // public
 	void setMasterCardSizeIndicator(bool is7Byte);  // private
 	bool getMasterCardSizeIndicator();  // private
 
 	//Registered Cards
-	void registerNewCard(uint8_t * cardId, uint8_t uid_length); //public
-	bool isCardRegistered(uint8_t * cardId, uint8_t uid_length); //public
-	void registerNew7BCard(uint8_t* cardId); //private
-	void registerNew4BCard(uint8_t* cardId); //private
+	void registerNewCard(RfidCard card); //public
+	bool isCardRegistered(RfidCard card); //public
+	void registerNew7BCard(RfidCard card); //private
+	void registerNew4BCard(RfidCard card); //private
 	//bool delete4BCard(uint8_t * uid);
 	//bool delete7BCard(uint8_t * uid);
 
@@ -92,6 +93,6 @@ public:
 	void setCardBlockType(unsigned char block_index, bool is7ByteBlock); // private
 	bool isCardBlock7B(unsigned char block_index); // private
 	unsigned char getCardBlockIndicator(unsigned char block_index); // private
-	bool isCardInBlock(const unsigned char block_index, uint8_t* cardId, const uint8_t uid_length) const; // private
-	void printCard(uint8_t* card, uint8_t uid_length) const;
+	bool isCardInBlock(const unsigned char block_index, RfidCard card) const; // private
+	void printCard(RfidCard card) const;
 };
