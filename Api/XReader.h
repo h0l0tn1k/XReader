@@ -3,6 +3,7 @@
 #include "EEPROMStorageHandler.h"
 #include "SoundHelper.h"
 #include "LedHelper.h"
+#include "Structs/RfidCard.h"
 
 #define DOOR_OPENED_INTERVAL  5000
 

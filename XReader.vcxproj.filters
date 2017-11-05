@@ -21,34 +21,34 @@
     <ClInclude Include="__vm\.XReader.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XReader.h">
+    <ClInclude Include="Api\EEPROMStorageHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EEPROMStorageHandler.h">
+    <ClInclude Include="Api\ILedHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SoundHelper.h">
+    <ClInclude Include="Api\IPinHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LedHelper.h">
+    <ClInclude Include="Api\ISoundHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ILedHelper.h">
+    <ClInclude Include="Api\LedHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ISoundHelper.h">
+    <ClInclude Include="Api\PinHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PinHelper.h">
+    <ClInclude Include="Api\RfidCard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IPinHelper.h">
+    <ClInclude Include="Api\SoundHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RfidCard.h">
+    <ClInclude Include="Api\UidSize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UidSize.h">
+    <ClInclude Include="Api\XReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -66,9 +66,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PinHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UidSize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

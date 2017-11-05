@@ -1,7 +1,7 @@
 #pragma once
 // ReSharper disable once CppUnusedIncludeDirective
 #include <Arduino.h>
-#include "ISoundHelper.h"
+#include "Interfaces\ISoundHelper.h"
 
 #define INVALID_SOUND (261)
 #define VALID_SOUND (3000)

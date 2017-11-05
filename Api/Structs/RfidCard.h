@@ -1,5 +1,5 @@
 #pragma once
-#include "UidSize.h"
+#include "..\Enums\UidSize.h"
 
 struct RfidCard
 {

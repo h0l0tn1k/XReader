@@ -1,5 +1,5 @@
 #pragma once
-#include "IPinHelper.h"
+#include "Interfaces\IPinHelper.h"
 #include <Arduino.h>
 
 class PinHelper : public IPinHelper

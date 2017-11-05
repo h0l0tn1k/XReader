@@ -1,5 +1,4 @@
-#include "XReader.h"
-#include "RfidCard.h"
+#include "Api\XReader.h"
 
 XReader::XReader() 
 {

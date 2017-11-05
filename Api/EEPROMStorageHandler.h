@@ -1,7 +1,7 @@
 #pragma once
 #include <EEPROM.h>
 #include "HardwareSerial.h"
-#include "RfidCard.h"
+#include "Structs\RfidCard.h"
 
 typedef unsigned long int uint32_m;
 
