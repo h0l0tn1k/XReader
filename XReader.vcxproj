@@ -85,14 +85,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EEPROMStorageHandler.h" />
+    <ClInclude Include="ILedHelper.h" />
+    <ClInclude Include="IPinHelper.h" />
     <ClInclude Include="ISoundHelper.h" />
+    <ClInclude Include="LedHelper.h" />
+    <ClInclude Include="PinHelper.h" />
+    <ClInclude Include="RfidCard.h" />
     <ClInclude Include="SoundHelper.h" />
+    <ClInclude Include="UidSize.h" />
     <ClInclude Include="XReader.h" />
     <ClInclude Include="__vm\.XReader.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EEPROMStorageHandler.cpp" />
+    <ClCompile Include="LedHelper.cpp" />
+    <ClCompile Include="PinHelper.cpp" />
     <ClCompile Include="SoundHelper.cpp" />
+    <ClCompile Include="UidSize.cpp" />
     <ClCompile Include="XReader.cpp" />
   </ItemGroup>
   <PropertyGroup>

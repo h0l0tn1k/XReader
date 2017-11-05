@@ -2,22 +2,19 @@
 #include <Adafruit_PN532.h>
 #include "EEPROMStorageHandler.h"
 #include "SoundHelper.h"
+#include "LedHelper.h"
 
-#define PN532_SS   (10)
 #define DOOR_OPENED_INTERVAL  5000
 
-class XReader {
+class XReader : protected PinHelper {
 
   Adafruit_PN532*		_board;
   EEPROMStorageHandler* _eepromStorage;
   ISoundHelper*			_soundHelper;
+  ILedHelper*			_ledHelper;
 
-  const unsigned char	_redLedPin = 9;
-  const unsigned char	_blueLedPin = 8;
-  const unsigned char	_greenLedPin = 7;
-  const unsigned char	_button1Pin = 4;
-  const unsigned char   _openDoorPin = 3;
-  const unsigned char	_buzzerPin = 2;
+  const uint8_t	_button1Pin = 4;
+  const uint8_t _openDoorPin = 3;
 
   unsigned int			_consecutiveFails = 0;
 
@@ -38,25 +35,17 @@ public:
 	void loopProcedure();
 
 private:
+
+	/**
+	 * \brief Inits various settings for PN532 board
+	 */
 	void initBoard() const;
 
 	/**
-	* \brief Checks whether connection to PN532 was successful, if yes, inits board otherwise halts
+	* \brief Checks whether connection to PN532 was successful, if yes, calls initBoard method otherwise halts
 	*/
 	void checkConnectionToPn532() const;
-
-	/**
-	* \brief Switches on Pin at \param ledPin
-	* \param ledPin Pin to be switched on
-	*/
-	static void switchPinOn(unsigned char ledPin);
-
-	/**
-	* \brief Switches off Pin at \param ledPin
-	* \param ledPin Pin to be switched off
-	*/
-	static void switchPinOff(unsigned char ledPin);	
-
+	
 	/**
 	* \brief Handles unsuccessful RFID Card authorization to XReader by sounding buzzer, switching LED's and by delaying of next attempt
 	*/
